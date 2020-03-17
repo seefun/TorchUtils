@@ -23,3 +23,6 @@ TorchUtils is a pytorch lib with some useful tools and state-of-the-art methods 
 - [ ] Automold--Road-Augmentation-Library
 - [ ] GridMask
 - [ ] AugMix
+
+## TTA
+ - [] https://github.com/qubvel/ttach
