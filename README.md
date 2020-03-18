@@ -26,3 +26,6 @@ TorchUtils is a pytorch lib with some useful tools and state-of-the-art methods 
 
 ## TTA
  - [] https://github.com/qubvel/ttach
+ 
+## Seg tricks
+https://github.com/XiaLiPKU/EMANet
