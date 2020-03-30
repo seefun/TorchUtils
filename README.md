@@ -3,7 +3,7 @@ TorchUtils is a pytorch lib with some useful tools and state-of-the-art methods 
 
 ## Models
 
-- [ ] EfficientNet
+- [ ] EfficientNet 
 - [ ] EfficientNet (noisy student)
 - [ ] EfficientNet (advprop)
 - [ ] SENet (from imgclsmob)
@@ -16,6 +16,8 @@ TorchUtils is a pytorch lib with some useful tools and state-of-the-art methods 
 - [ ] InceptionResNetV2 (from pretrained-models.pytorch)
 - [ ] pretrained_models
 - [ ] imgclsmob
+
+from : https://github.com/rwightman/pytorch-image-models / imgclsmobs / pretrained-models / ....
 
 ## Augmentationo
 
