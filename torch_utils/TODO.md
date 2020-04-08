@@ -31,3 +31,9 @@ from : https://github.com/rwightman/pytorch-image-models / imgclsmobs / pretrain
  
 ## Seg tricks
  - [ ] https://github.com/XiaLiPKU/EMANet
+
+## Training Tools
+- [ ] pytorch/help
+- [ ] pytorch/training
+- [x] layers
+
