@@ -19,7 +19,7 @@ TorchUtils is a pytorch lib with some useful tools and state-of-the-art methods 
 
 from : https://github.com/rwightman/pytorch-image-models / imgclsmobs / pretrained-models / ....
 
-## Augmentationo
+## Augmentations
 
 - [ ] common aug in competition
 - [ ] Automold--Road-Augmentation-Library
