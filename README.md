@@ -27,7 +27,7 @@ from : https://github.com/rwightman/pytorch-image-models / imgclsmobs / pretrain
 - [ ] AugMix
 
 ## TTA
- - [] https://github.com/qubvel/ttach
+ - [ ] https://github.com/qubvel/ttach
  
 ## Seg tricks
-https://github.com/XiaLiPKU/EMANet
+ - [ ] https://github.com/XiaLiPKU/EMANet
