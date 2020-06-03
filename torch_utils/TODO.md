@@ -21,6 +21,7 @@ TorchUtils is a pytorch lib with some useful tools and state-of-the-art methods 
 - [ ] gen-efficientnet
 - [ ] pytorch-encoding
 - [ ] BiT (https://github.com/google-research/big_transfer)
+- [ ] ResNeSt (https://github.com/zhanghang1989/ResNeSt)
 
 from : https://github.com/rwightman/pytorch-image-models / imgclsmobs / pretrained-models / ....
 
