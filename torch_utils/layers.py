@@ -199,7 +199,7 @@ def get_attention_fc(in_ch, num_classes, flatten=False):
 # SpaceToDepth == inverted pixel shuffle
 # Official: torch.nn.PixelShuffle(upscale_factor)
 
-def pixelshuffle(x: torch.Tensor, factor_hw: Tuple[int, int]):
+def pixelshuffle(x: torch.Tensor, factor_hw):
     pH = factor_hw[0]
     pW = factor_hw[1]
     y = x
@@ -211,7 +211,7 @@ def pixelshuffle(x: torch.Tensor, factor_hw: Tuple[int, int]):
     return y
 
 
-def pixelshuffle_invert(x: torch.Tensor, factor_hw: Tuple[int, int]):
+def pixelshuffle_invert(x: torch.Tensor, factor_hw):
     pH = factor_hw[0]
     pW = factor_hw[1]
     y = x
