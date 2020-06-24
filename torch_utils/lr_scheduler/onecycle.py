@@ -56,3 +56,6 @@ class OneCycleScheduler(object):
                             for _ in range(len(self.optimizer.param_groups))]
 
         self._assign_lr_mom(curr_lrs, curr_moms)
+        
+# the official implementation:
+# torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, total_steps=None, epochs=None, steps_per_epoch=None, pct_start=0.3, anneal_strategy='cos', cycle_momentum=True, base_momentum=0.85, max_momentum=0.95, div_factor=25.0, final_div_factor=10000.0, last_epoch=-1)
