@@ -99,6 +99,7 @@ optimizer_ranger = tu.Ranger(model_conv.parameters(), lr=LR)
 
 
 ## Criterion
+TODO:
 - [ ] Criterions
 
 
@@ -125,6 +126,6 @@ scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max
 
 
 ## TTA:
-
+TODO ：
 - [ ] TTA: https://github.com/qubvel/ttach
 
