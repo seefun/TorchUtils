@@ -1,4 +1,4 @@
-#https://github.com/katsura-jp/pytorch-cosine-annealing-with-warmup
+# https://github.com/katsura-jp/pytorch-cosine-annealing-with-warmup
 
 import math
 from torch.optim.lr_scheduler import _LRScheduler
