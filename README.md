@@ -97,6 +97,9 @@ optimizer_ranger = tu.Ranger(model_conv.parameters(), lr=LR)
 # optimizer = torch.optim.AdamW(model_conv.parameters(), lr=LR, weight_decay=2e-4)
 ```
 
+TODO:
+- [ ] SWA
+- [ ] EMA
 
 ## Criterion
 TODO:
