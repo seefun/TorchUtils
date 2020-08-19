@@ -128,3 +128,7 @@ scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max
 TODO ：
 - [ ] TTA: https://github.com/qubvel/ttach
 
+## AMP
+TODO:
+In pytorch 1.6
+https://pytorch.org/docs/master/notes/amp_examples.html
