@@ -132,3 +132,12 @@ TODO ：
 TODO:
 In pytorch 1.6
 https://pytorch.org/docs/master/notes/amp_examples.html
+
+
+## TODO
+1. clean code using pytorch 1.6.0
+2. cutmix : https://github.com/ildoonet/cutmix
+3. randaug: https://github.com/ildoonet/pytorch-randaugment
+4. fast-autoaug: https://github.com/kakaobrain/fast-autoaugment
+5. SupContrast: https://github.com/HobbitLong/SupContrast
+6. metric learning: https://github.com/KevinMusgrave/pytorch-metric-learning
