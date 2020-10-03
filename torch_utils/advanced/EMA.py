@@ -60,3 +60,5 @@ for i in range(EPOCH):
 torch.optim.swa_utils.update_bn(loader, ema_model)
 preds = ema_model(test_input)
 '''
+
+# SWA in pytorch 1.6 https://pytorch.org/blog/pytorch-1.6-now-includes-stochastic-weight-averaging/#how-to-use-swa-in-pytorch
