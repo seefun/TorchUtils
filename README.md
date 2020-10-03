@@ -3,6 +3,7 @@
 
 TorchUtils is a pytorch lib with several useful tools and some state-of-the-art training methods or tricks. (Work In Progress)
 
+- [ ] Rewirte the repo using pytorch 1.6 (because many tool functions or tricks now natively supported in PyTorch 1.6)
 
 ## Import
 
