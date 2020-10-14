@@ -35,6 +35,9 @@ class LabelSmoothingCrossEntropy(nn.Module):
 #             valid_loss, idxs = torch.topk(loss, round(self.top_k * loss.size()[0]), dim=0)    
 #             return torch.mean(valid_loss)
 
+def reduce_loss(loss, reduction='mean'):
+    return loss.mean() if reduction=='mean' else loss.sum() if reduction=='sum' else loss
+
 class LabelSmoothingCrossEntropy(nn.Module):
     def __init__(self, eps:float=0.1, reduction='mean'):
         super().__init__()
