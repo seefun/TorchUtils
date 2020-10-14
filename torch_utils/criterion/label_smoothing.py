@@ -1,3 +1,5 @@
+# TODO: criterion - binary / multiclass
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -32,3 +34,17 @@ class LabelSmoothingCrossEntropy(nn.Module):
 #         else:
 #             valid_loss, idxs = torch.topk(loss, round(self.top_k * loss.size()[0]), dim=0)    
 #             return torch.mean(valid_loss)
+
+class LabelSmoothingCrossEntropy(nn.Module):
+    def __init__(self, eps:float=0.1, reduction='mean'):
+        super().__init__()
+        self.eps,self.reduction = eps,reduction
+    
+    def forward(self, output, target):
+        # number of classes
+        c = output.size()[-1]
+        log_preds = F.log_softmax(output, dim=-1)
+        loss = reduce_loss(-log_preds.sum(dim=-1), self.reduction)
+        nll = F.nll_loss(log_preds, target, reduction=self.reduction)
+        # (1-ε)* H(q,p) + ε*H(u,p)
+        return (1-self.eps)*nll + self.eps*(loss/c) 
