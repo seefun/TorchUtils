@@ -59,7 +59,7 @@ class SmoothBCEwLogits(_WeightedLoss):
     def __init__(self, weight=None, reduction='mean', smoothing=0.0):
         super().__init__(weight=weight, reduction=reduction)
         self.smoothing = smoothing
-        self.seight = weight
+        self.weight = weight
         self.reduction = reduction
         
     @staticmethod
