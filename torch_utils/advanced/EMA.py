@@ -62,3 +62,4 @@ preds = ema_model(test_input)
 '''
 
 # SWA in pytorch 1.6 https://pytorch.org/blog/pytorch-1.6-now-includes-stochastic-weight-averaging/#how-to-use-swa-in-pytorch
+# https://github.com/rwightman/pytorch-image-models/blob/master/timm/utils/model_ema.py
