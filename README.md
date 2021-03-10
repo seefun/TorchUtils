@@ -3,7 +3,7 @@
 
 TorchUtils is a pytorch lib with several useful tools and some state-of-the-art training methods or tricks. (Work In Progress)
 
-- [ ] TODO: refact the codebase
+- [ ] TODO: refact the codebase; auto download the pretrained model; download several pretrained model to local
 
 - [ ] Rewirte the repo using pytorch 1.6 (because many tool functions or tricks now natively supported in PyTorch 1.6)
 
@@ -47,6 +47,7 @@ recommanded pretrained models:
 - SKNet
 - [SGENet](https://github.com/implus/PytorchInsight)
 - [HRNet](https://github.com/HRNet)
+- Res2Net
 
 
 from github repos：
