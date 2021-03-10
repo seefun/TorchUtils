@@ -3,6 +3,8 @@
 
 TorchUtils is a pytorch lib with several useful tools and some state-of-the-art training methods or tricks. (Work In Progress)
 
+- [ ] TODO: refact the codebase
+
 - [ ] Rewirte the repo using pytorch 1.6 (because many tool functions or tricks now natively supported in PyTorch 1.6)
 
 ## Import
@@ -33,16 +35,19 @@ TODO:
 
 recommanded pretrained models:
 
+- [ResNeSt](https://github.com/zhanghang1989/ResNeSt)  
 - SEResNext-50 
+- GPU-Efficient
+- swsl_ResNeXt
+- [BiT/ResNetV2](https://github.com/google-research/big_transfer) 
 - [TResNet](https://github.com/mrT23/TResNet)
-- [ResNeSt](https://github.com/zhanghang1989/ResNeSt)
-- EfficientNet 
+- EfficientNet_ns
 - [ResNext_WSL](https://github.com/facebookresearch/WSL-Images)
-- [BiT](https://github.com/google-research/big_transfer) 
 - MixNet
 - SKNet
 - [SGENet](https://github.com/implus/PytorchInsight)
 - [HRNet](https://github.com/HRNet)
+
 
 from github repos：
 
