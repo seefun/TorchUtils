@@ -3,9 +3,9 @@
 
 TorchUtils is a pytorch lib with several useful tools and some state-of-the-art training methods or tricks. (Work In Progress)
 
-- [ ] TODO: refact the codebase; auto download the pretrained model; download several pretrained model to local
+- [ ] TODO: refact the codebase; auto download the pretrained model; download several pretrained model to local; 
 
-- [ ] Rewirte the repo using pytorch 1.6 (because many tool functions or tricks now natively supported in PyTorch 1.6)
+- [ ] Rewirte the repo using pytorch 1.6 (because many tool functions or tricks now natively supported in PyTorch 1.6); and using timm to rebuild some code
 
 ## Import
 
