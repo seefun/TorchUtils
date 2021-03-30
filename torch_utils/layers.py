@@ -63,6 +63,11 @@ class SEBlock(nn.Module):
         return x
 
 
+# TODO:
+# add GloRe(GCN attention) here
+# https://github.com/facebookresearch/GloRe/blob/master/network/global_reasoning_unit.py
+    
+    
 class Flatten(nn.Module):
     def forward(self, input):
         return input.view(input.size(0), -1)
