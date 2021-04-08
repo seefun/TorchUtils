@@ -87,10 +87,17 @@ model utils:
 tu.models.summary(model, (3,224,224))
 
 # 3 channels pretrained weights to 1 channel
-weight_rgb = model.conv1.weight
+weight_rgb = model.conv1.weight.data
 weight_grey = weight_rgb.sum(dim=1, keepdim=True)
 model.conv1 = nn.Conv2d(1, 64, kernel_size=xxx, stride=xxx, padding=xxx, bias=False)
-model.conv1.weight = torch.nn.Parameter(weight_grey)
+model.conv1.weight.data = weight_grey
+
+# 3 channels pretrained weights to 4 channel
+weight_rgb = model.conv1.weight.data
+weight_y = weight_rgb.mean(dim=1, keepdim=True)
+weight_rgby = torch.cat([weight_rgb,weight_y], axis=1) * 3 / 4
+model.conv1 = nn.Conv2d(4, 64, kernel_size=xxx, stride=xxx, padding=xxx, bias=False)
+model.conv1.weight.data = weight_rgby
 
 # 2D models to 3d models using ACSConv (advanced)
 ## using code in this repo: https://github.com/M3DV/ACSConv
