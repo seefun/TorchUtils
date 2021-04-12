@@ -24,8 +24,8 @@ def worker_init_fn(worker_id):
     e.g
     DataLoader(dataset, batch_size=2, num_workers=4, worker_init_fn=worker_init_fn)
     and also, you should do:
-    np.random.seed(initial_seed + epoch)
-    in each epoch
+    np.random.seed(initial_seed + epoch*999)
+    in each epoch start
     """
     np.random.seed(np.random.get_state()[1][0] + worker_id)   
 
