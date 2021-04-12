@@ -17,6 +17,14 @@ def seed_everything(seed=42, deterministic=True):
     else:
         torch.backends.cudnn.benchmark = True
 
+def worker_init_fn(worker_id):
+    """
+    used in dataloader to avoid numpy random bug in multi workers pytorch dataloader
+    https://tanelp.github.io/posts/a-bug-that-plagues-thousands-of-open-source-ml-projects/
+    e.g
+    DataLoader(dataset, batch_size=2, num_workers=4, worker_init_fn=worker_init_fn)
+    """
+    np.random.seed(np.random.get_state()[1][0] + worker_id)  
 
 def backup_folder(source='.', destination='../exp/exp1/src'):
     shutil.copytree(source, destination)  
