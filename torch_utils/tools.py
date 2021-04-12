@@ -23,8 +23,11 @@ def worker_init_fn(worker_id):
     https://tanelp.github.io/posts/a-bug-that-plagues-thousands-of-open-source-ml-projects/
     e.g
     DataLoader(dataset, batch_size=2, num_workers=4, worker_init_fn=worker_init_fn)
+    and also, you should do:
+    np.random.seed(initial_seed + epoch)
+    in each epoch
     """
-    np.random.seed(np.random.get_state()[1][0] + worker_id)  
+    np.random.seed(np.random.get_state()[1][0] + worker_id)   
 
 def backup_folder(source='.', destination='../exp/exp1/src'):
     shutil.copytree(source, destination)  
