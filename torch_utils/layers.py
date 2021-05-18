@@ -4,6 +4,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.nn.parameter import Parameter
 
+# Attention 
 class CSE(nn.Module):
     def __init__(self, in_ch, r):
         super(CSE, self).__init__()
@@ -20,7 +21,6 @@ class CSE(nn.Module):
         x = input_x * x
         return x
 
-
 class SSE(nn.Module):
     def __init__(self, in_ch):
         super(SSE, self).__init__()
@@ -32,7 +32,6 @@ class SSE(nn.Module):
         x = torch.sigmoid(x)
         x = input_x * x
         return x
-
 
 class SCSE(nn.Module):
     def __init__(self, in_ch, r=8):
@@ -62,45 +61,42 @@ class SEBlock(nn.Module):
         x = input_x * x
         return x
 
-
 # TODO:
-# add GloRe(GCN attention) here
+# add GloRe(GCN attention) 
 # https://github.com/facebookresearch/GloRe/blob/master/network/global_reasoning_unit.py
-    
-    
+# add CCAtention
+# https://github.com/speedinghzl/CCNet/blob/master/networks/ccnet.py#L99
+
 class Flatten(nn.Module):
     def forward(self, input):
         return input.view(input.size(0), -1)
-
-
-class AdaptiveConcatPool2d(nn.Module):
-    def __init__(self, sz=None):
-        super().__init__()
-        sz = sz or (1,1)
-        self.ap = nn.AdaptiveAvgPool2d(sz)
-        self.mp = nn.AdaptiveMaxPool2d(sz)
-    def forward(self, x):
-        return torch.cat([self.mp(x), self.ap(x)], 1)
-  
 
 def gem(x, p=3, eps=1e-6):
     return F.avg_pool2d(x.clamp(min=eps).pow(p), (x.size(-2), x.size(-1))).pow(1./p)
 
 class GeM(nn.Module):
-    def __init__(self, p=3, eps=1e-6):
+    def __init__(self, p=3, flatten=True, eps=1e-6):
         super(GeM,self).__init__()
         self.p = Parameter(torch.ones(1)*p)
         self.eps = eps
+        if flatten:
+            self.flatten = Flatten()
+        else:
+            self.flatten = False
 
     def forward(self, x):
-        return gem(x, p=self.p, eps=self.eps)
-
+        x = gem(x, p=self.p, eps=self.eps)
+        if self.flatten:
+            return self.flatten(x)
+        else:
+            return x
+            
     def __repr__(self):
         return self.__class__.__name__ + '(' + 'p=' + '{:.4f}'.format(self.p.data.tolist()[0]) + ', ' + 'eps=' + str(self.eps) + ')'
 
 
 class FastGlobalAvgPool2d(nn.Module):
-    def __init__(self, flatten=False): # flatten == True : pool + flatten
+    def __init__(self, flatten=True): # flatten == True : pool + flatten
         super(FastGlobalAvgPool2d, self).__init__()
         self.flatten = flatten
 
@@ -113,7 +109,7 @@ class FastGlobalAvgPool2d(nn.Module):
 
 
 class FastGlobalConcatPool2d(nn.Module):
-    def __init__(self, flatten=False): # flatten == True : pool + flatten
+    def __init__(self, flatten=True): # flatten == True : pool + flatten
         super(FastGlobalConcatPool2d, self).__init__()
         self.flatten = flatten
 
@@ -126,12 +122,11 @@ class FastGlobalConcatPool2d(nn.Module):
             x = x.view(x.size(0), x.size(1), -1)
             return torch.cat([x.mean(-1), x.max(-1).values], 1).view(x.size(0), 2*x.size(1), 1, 1)
 
-
 class MultiSampleDropoutFC(nn.Module):
     def __init__(self, in_ch, out_ch, num_sample = 5, dropout = 0.5):
         super(MultiSampleDropoutFC, self).__init__()
         self.dropouts = nn.ModuleList([nn.Dropout(dropout) for _ in range(num_sample)])
-        self.fc = nn.Linear(in_ch, out_ch)
+        self.fc = nn.Linear(in_ch, out_ch, bias=True)
 
     def forward(self,x):
         for i, dropout in enumerate(self.dropouts):

@@ -1,10 +1,14 @@
-from .lr_scheduler import *
-from .optimizer import *
 from .advanced import *
+from .criterion import *
 from .dataset import *
+from .lr_scheduler import *
 from .models import *
+from .optimizer import *
 
 from . import layers
 from . import tools
 
-from .__version__ import __version__
+__version__ = '0.0.1'
+
+def get_version():
+    return __version__

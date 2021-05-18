@@ -1,11 +1,13 @@
 
 # TorchUtils 
 
-TorchUtils is a pytorch lib with several useful tools and some state-of-the-art training methods or tricks. (Work In Progress)
+TorchUtils is a pytorch lib with several useful tools and training tricks. (Work In Progress)
 
-- [ ] TODO: refact the codebase; auto download the pretrained model; download several pretrained model to local; 
-
-- [ ] Rewirte the repo using pytorch 1.6 (because many tool functions or tricks now natively supported in PyTorch 1.6); and using timm to rebuild some code
+## Install
+```
+pip install -r requirements.txt
+pip install .
+```
 
 ## Import
 
@@ -23,13 +25,18 @@ tu.tools.seed_everything(SEED)
 
 ## Data Augmentation
 
-TODO:
+```
+train_transform = albumentations.Compose([
+    albumentations.Resize(IMAGE_SIZE, IMAGE_SIZE),
+    albumentations.HorizontalFlip(p=0.5),
+    tu.dataset.randAugment(image_size=IMAGE_SIZE, N=2, M=12, p=0.9, mode='all', cut_out=False),
+    albumentations.Normalize(),
+    albumentations.Cutout(num_holes=8, max_h_size=IMAGE_SIZE//8, max_w_size=IMAGE_SIZE//8, fill_value=0, p=0.25),
+    AT.ToTensorV2(),
+    ])
 
-- [x] common data augmentations used in competition
-- [ ] [Automold--Road-Augmentation-Library](https://github.com/UjjwalSaxena/Automold--Road-Augmentation-Library)
-- [ ] [GridMask](https://www.kaggle.com/haqishen/gridmask)
-- [ ] [AugMix](https://www.kaggle.com/haqishen/augmix-based-on-albumentations)
-
+mixup_dataset = tu.dataset.MixupDataset(dataset, alpha=1.0, prob=0.1, mixup_to_cutmix=0.3) # 0.07 mixup and 0.03 cutmix
+```
 
 ## Model
 
@@ -50,7 +57,7 @@ recommanded pretrained models:
 - Res2Net
 
 
-from github repos：
+recommanded github repos：
 
 - [pytorch-image-models(timm)](https://github.com/rwightman/pytorch-image-models)
 - [imgclsmob(pytorchcv)](https://github.com/osmr/imgclsmob/tree/master/pytorch)
@@ -62,6 +69,13 @@ from github repos：
 
 
 fast build models with torch_utils: 
+```
+model = tu.ImageModel(name='resnest50d', pretrained=True, 
+                      pooling=None, fc='multi-dropout', 
+                      feature=2048, classes=1))
+model.cuda()
+```
+
 
 ```
 import timm
@@ -84,7 +98,7 @@ model.cuda()
 model utils:
 ```
 # model summary
-tu.models.summary(model, (3,224,224))
+tu.summary(model, input_size=(batch_size, 1, 28, 28))
 
 # 3 channels pretrained weights to 1 channel
 weight_rgb = model.conv1.weight.data
@@ -111,10 +125,12 @@ optimizer_ranger = tu.Ranger(model_conv.parameters(), lr=LR)
 # optimizer = torch.optim.AdamW(model_conv.parameters(), lr=LR, weight_decay=2e-4)
 ```
 
-## Criterion
-TODO:
-- [ ] Criterions
 
+## Criterion
+```
+# for example:
+criterion = tu.LabelSmoothingCrossEntropy()
+```
 
 
 ## Find LR 
@@ -132,26 +148,17 @@ scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max
 
 # torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult=1, eta_min=0, last_epoch=-1)
 
-# torch.optim.lr_scheduler.OneCycleLR
-# tu.OneCycleScheduler
+# torch.optim.lr_scheduler.OneCycleLR or tu.OneCycleScheduler
 ```
 
 
-
-## TTA:
-TODO ：
-- [ ] TTA: https://github.com/qubvel/ttach
-
 ## AMP
-TODO:
-In pytorch 1.6
-https://pytorch.org/docs/master/notes/amp_examples.html
+
+Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 
 
 ## TODO
-1. clean code using pytorch 1.6.0
-2. cutmix : https://github.com/ildoonet/cutmix
-3. randaug: https://github.com/ildoonet/pytorch-randaugment
-4. fast-autoaug: https://github.com/kakaobrain/fast-autoaugment
-5. SupContrast: https://github.com/HobbitLong/SupContrast
-6. metric learning: https://github.com/KevinMusgrave/pytorch-metric-learning
+- [ ] [duplicate image detection](https://www.kaggle.com/nakajima/duplicate-train-images?scriptVersionId=47295222) 
+- [ ] [Ranger21](https://github.com/lessw2020/Ranger21) optimizer and lr_scheduler
+- [ ] KD: [torchdistill](https://github.com/yoshitomo-matsubara/torchdistill)
+

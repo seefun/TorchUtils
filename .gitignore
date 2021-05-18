@@ -1,0 +1,31 @@
+.idea
+*.idea
+*.vscode
+*.txt
+*.__pycache__
+
+
+# compilation and distribution
+__pycache__
+*.egg
+*.egg-info
+_ext
+*.pyc
+*.so
+build/
+dist/
+wheels/
+cocoapi*
+panopticapi*
+
+
+# ipython/jupyter notebooks
+**/.ipynb_checkpoints/
+
+# Editor temporaries
+*.swn
+*.swo
+*.swp
+*~
+
+exp/*
