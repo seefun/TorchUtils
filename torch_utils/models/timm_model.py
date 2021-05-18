@@ -31,7 +31,7 @@ conv_models = {
 
 class ImageModel(nn.Module):
     
-    def __init__(self, name='resnest50d', pretrained=True, pooling=None, fc='multi-dropout', feature=2048, classes=1):
+    def __init__(self, name='resnest50d', pretrained=True, pooling='concat', fc='multi-dropout', feature=2048, classes=1):
         super(ImageModel, self).__init__()
         self.model = create_model(name, pretrained, pool=False)
         

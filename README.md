@@ -35,7 +35,8 @@ train_transform = albumentations.Compose([
     AT.ToTensorV2(),
     ])
 
-mixup_dataset = tu.dataset.MixupDataset(dataset, alpha=1.0, prob=0.1, mixup_to_cutmix=0.3) # 0.07 mixup and 0.03 cutmix
+mixup_dataset = tu.dataset.MixupDataset(dataset, alpha=1.0, prob=0.1, mixup_to_cutmix=0.3) 
+# 0.07 mixup and 0.03 cutmix
 ```
 
 ## Model
