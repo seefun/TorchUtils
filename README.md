@@ -137,7 +137,7 @@ criterion = tu.LabelSmoothingCrossEntropy()
 ## Find LR 
 ```
 lr_finder = tu.LRFinder(model, optimizer, criterion, device="cuda")
-lr_finder.range_test(train_loader, end_lr=10, num_iter=100)
+lr_finder.range_test(train_loader, end_lr=10, num_iter=500, accumulation_steps=1)
 lr_finder.plot() # to inspect the loss-learning rate graph
 lr_finder.reset() # to reset the model and optimizer to their initial state
 ```
