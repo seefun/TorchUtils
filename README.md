@@ -35,7 +35,8 @@ train_transform = albumentations.Compose([
     AT.ToTensorV2(),
     ])
 
-mixup_dataset = tu.dataset.MixupDataset(dataset, alpha=1.0, prob=0.1, mixup_to_cutmix=0.3) # 0.07 mixup and 0.03 cutmix
+mixup_dataset = tu.dataset.MixupDataset(dataset, alpha=1.0, prob=0.1, mixup_to_cutmix=0.3) 
+# 0.07 mixup and 0.03 cutmix
 ```
 
 ## Model
@@ -71,7 +72,7 @@ recommanded github repos：
 fast build models with torch_utils: 
 ```
 model = tu.ImageModel(name='resnest50d', pretrained=True, 
-                      pooling=None, fc='multi-dropout', 
+                      pooling='concat', fc='multi-dropout', 
                       feature=2048, classes=1))
 model.cuda()
 ```
@@ -136,7 +137,7 @@ criterion = tu.LabelSmoothingCrossEntropy()
 ## Find LR 
 ```
 lr_finder = tu.LRFinder(model, optimizer, criterion, device="cuda")
-lr_finder.range_test(train_loader, end_lr=10, num_iter=100)
+lr_finder.range_test(train_loader, end_lr=10, num_iter=500, accumulation_steps=1)
 lr_finder.plot() # to inspect the loss-learning rate graph
 lr_finder.reset() # to reset the model and optimizer to their initial state
 ```
