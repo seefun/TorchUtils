@@ -11,7 +11,7 @@ funcs = [
         imagehash.whash,
     ]
 
-def delete_duplicate_imghash(imgpath_list, threshold=0.9, verbose=True):
+def delete_duplicate_imghash(imgpath_list, threshold=0.9, verbose=True, cuda=False):
     image_ids = []
     hashes = []
 
@@ -24,7 +24,11 @@ def delete_duplicate_imghash(imgpath_list, threshold=0.9, verbose=True):
     
     hashes_all = np.array(hashes)
 
-    sims = np.array([np.sum((hashes_all[i] == hashes_all), axis=1)/256 for i in range(hashes_all.shape[0])])
+    if cuda:
+        hashes_all = torch.Tensor(hashes_all.astype(int)).cuda()
+        sims = np.array([(hashes_all[i] == hashes_all).sum(axis=1).cpu().numpy()/256 for i in range(hashes_all.shape[0])])
+    else:
+        sims = np.array([np.sum((hashes_all[i] == hashes_all), axis=1)/256 for i in range(hashes_all.shape[0])])
 
     indices1 = np.where(sims > threshold)
     indices2 = np.where(indices1[0] != indices1[1])
