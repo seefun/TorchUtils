@@ -1,5 +1,5 @@
 timm>=0.4.5
-albumentations>=0.5.2
+albumentations>=1.0.0
 pytorch-metric-learning>=0.9.99
 torchinfo>=0.1.1
 torch-lr-finder>=0.2.1

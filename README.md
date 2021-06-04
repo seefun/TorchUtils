@@ -159,7 +159,8 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 
 
 ## TODO
-- [ ] [duplicate image detection](https://www.kaggle.com/nakajima/duplicate-train-images?scriptVersionId=47295222) 
+- [x] [duplicate image detection](https://www.kaggle.com/nakajima/duplicate-train-images?scriptVersionId=47295222) 
 - [ ] [Ranger21](https://github.com/lessw2020/Ranger21) optimizer and lr_scheduler
 - [ ] KD: [torchdistill](https://github.com/yoshitomo-matsubara/torchdistill)
+- [ ] https://github.com/sovrasov/flops-counter.pytorch
 
