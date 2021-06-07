@@ -15,7 +15,7 @@ def create_model(name, pretrained, pool=True):
         model = timm.create_model(name, features_only=True, pretrained=pretrained)
     else:  # (bs, c, f_h, f_w)
         model = timm.create_model(name, features_only=True, pretrained=pretrained,
-                                  global_pool='')
+                                  global_pool='', num_classes = 0)
     return model
         
 def timm_create_model(name, pretrained, num_classes):
