@@ -67,7 +67,7 @@ class ImageModel(nn.Module):
         
     @autocast()
     def forward(self, x):
-        feature_map = self.model(x)
+        feature_map = self.model(x)[-1]
         embedding = self.pooling(feature_map)
         logits = self.fc(embedding)
         return logits, embedding
