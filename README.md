@@ -158,9 +158,12 @@ scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max
 Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 
 
+## DONE (Update)
+- [x] duplicated images finder
+
 ## TODO
-- [x] [duplicate image detection](https://www.kaggle.com/nakajima/duplicate-train-images?scriptVersionId=47295222) 
-- [ ] [Ranger21](https://github.com/lessw2020/Ranger21) optimizer and lr_scheduler
-- [ ] KD: [torchdistill](https://github.com/yoshitomo-matsubara/torchdistill)
-- [ ] https://github.com/sovrasov/flops-counter.pytorch
+Add features from:
+- [ ] [Ranger21](https://github.com/lessw2020/Ranger21) (optimizer and lr_scheduler)
+- [ ] [torchdistill](https://github.com/yoshitomo-matsubara/torchdistill)
+- [ ] [flops-counter](https://github.com/sovrasov/flops-counter.pytorch)
 
