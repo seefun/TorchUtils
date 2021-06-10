@@ -15,7 +15,7 @@ def create_model(name, pretrained, pool=True):
         model = timm.create_model(name, features_only=True, pretrained=pretrained)
     else:  # (bs, c, f_h, f_w)
         model = timm.create_model(name, features_only=True, pretrained=pretrained,
-                                  global_pool='')
+                                  global_pool='', num_classes = 0)
     return model
         
 def timm_create_model(name, pretrained, num_classes):
@@ -67,7 +67,7 @@ class ImageModel(nn.Module):
         
     @autocast()
     def forward(self, x):
-        feature_map = self.model(x)
+        feature_map = self.model(x)[-1]
         embedding = self.pooling(feature_map)
         logits = self.fc(embedding)
         return logits, embedding
