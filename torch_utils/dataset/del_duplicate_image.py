@@ -1,4 +1,5 @@
 import os
+import torch
 import numpy as np
 from tqdm.auto import tqdm
 from PIL import Image
