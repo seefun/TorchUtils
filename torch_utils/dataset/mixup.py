@@ -238,11 +238,13 @@ class MixupDataset(Dataset):
     def __init__(self, dataset, alpha=1.0, prob=0.1, mixup_to_cutmix=0.0):
         self.dataset = dataset
         self.prob = prob
+        self.mixup_to_cutmix = mixup_to_cutmix
         self.data_size = len(self)
         self.beta = Beta(torch.FloatTensor([alpha]), torch.FloatTensor([alpha]))
 
     def __getitem__(self, idx):
         img, label = self.dataset[idx]
+        label = np.array(label) # assert label like [0,1,0,0] or [0.0, 0.9, 0.05, 0.05]
         if torch.rand(1)[0] < self.prob:
             lam = self.beta.sample().numpy()
             rand_idx = torch.randint(self.data_size,(1,))[0].numpy()
