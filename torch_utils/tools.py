@@ -5,7 +5,24 @@ import numpy as np
 
 import shutil
 
+def set_gpus(gpus: str):
+    ''' 
+    setting cuda devices.
+
+    Example:
+        >>> set_gpus('0,1,2,3') 
+    '''
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpus
+
 def seed_everything(seed=42, deterministic=True):
+    ''' 
+    seed everything (os, np, torch and torch.cuda). 
+    deterministic = True : using deterministic algo to make exp reproducible
+    deterministic = False: using cudnn.benchmark to speed up training
+
+    Example:
+        >>> seed_everything(42) 
+    '''
     random.seed(seed)
     os.environ['PYHTONHASHSEED'] = str(seed)
     np.random.seed(seed)
@@ -21,11 +38,11 @@ def worker_init_fn(worker_id):
     """
     used in dataloader to avoid numpy random bug in multi workers pytorch dataloader
     https://tanelp.github.io/posts/a-bug-that-plagues-thousands-of-open-source-ml-projects/
-    e.g
-    DataLoader(dataset, batch_size=2, num_workers=4, worker_init_fn=worker_init_fn)
-    and also, you should do:
-    np.random.seed(initial_seed + epoch*999)
-    in each epoch start
+    
+    Example:
+        >>> DataLoader(dataset, batch_size=2, num_workers=4, worker_init_fn=worker_init_fn)
+        >>> # And also, in each epoch start, you should do:
+        >>> np.random.seed(initial_seed + epoch*999)
     """
     np.random.seed(np.random.get_state()[1][0] + worker_id)   
 
