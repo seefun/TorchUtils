@@ -14,8 +14,12 @@ def create_model(name, pretrained, pool=True):
     if pool: # pool with flatten (bs, c)
         model = timm.create_model(name, features_only=True, pretrained=pretrained)
     else:  # (bs, c, f_h, f_w)
-        model = timm.create_model(name, features_only=True, pretrained=pretrained,
-                                  global_pool='', num_classes = 0)
+        try:
+            model = timm.create_model(name, features_only=True, pretrained=pretrained,
+                                      global_pool='', num_classes = 0)
+        except:
+            model = timm.create_model(name, features_only=True, pretrained=pretrained,
+                                      global_pool='')
     return model
         
 def timm_create_model(name, pretrained, num_classes):
