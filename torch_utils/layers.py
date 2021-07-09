@@ -71,7 +71,7 @@ class Flatten(nn.Module):
     def forward(self, input):
         return input.view(input.size(0), -1)
 
-def gem(x, p=3, eps=1e-6):
+def gem(x, p=1, eps=1e-6):
     return F.avg_pool2d(x.clamp(min=eps).pow(p), (x.size(-2), x.size(-1))).pow(1./p)
 
 class GeM(nn.Module):
@@ -86,6 +86,28 @@ class GeM(nn.Module):
 
     def forward(self, x):
         x = gem(x, p=self.p, eps=self.eps)
+        if self.flatten:
+            return self.flatten(x)
+        else:
+            return x
+            
+    def __repr__(self):
+        return self.__class__.__name__ + '(' + 'p=' + '{:.4f}'.format(self.p.data.tolist()[0]) + ', ' + 'eps=' + str(self.eps) + ')'
+
+class GeM_cw(nn.Module):
+    """ channel-wise GeM Pooling """
+    def __init__(self, num_channel, p=1, flatten=True, eps=1e-6):
+        super(GeM_cw,self).__init__()
+        self.p = Parameter(torch.ones(num_channel)*p)
+        self.eps = eps
+        if flatten:
+            self.flatten = Flatten()
+        else:
+            self.flatten = False
+
+    def forward(self, x):
+        p = self.p.unsqueeze(0).unsqueeze(2).unsqueeze(3)
+        x = gem(x, p=p, eps=self.eps)
         if self.flatten:
             return self.flatten(x)
         else:
