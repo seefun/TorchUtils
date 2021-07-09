@@ -73,7 +73,7 @@ fast build models with torch_utils:
 ```
 model = tu.ImageModel(name='resnest50d', pretrained=True, 
                       pooling='concat', fc='multi-dropout', 
-                      feature=2048, classes=1))
+                      num_feature=2048, classes=1))
 model.cuda()
 ```
 

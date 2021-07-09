@@ -35,39 +35,39 @@ conv_models = {
 
 class ImageModel(nn.Module):
     
-    def __init__(self, name='resnest50d', pretrained=True, pooling='concat', fc='multi-dropout', feature=2048, classes=1):
+    def __init__(self, name='resnest50d', pretrained=True, pooling='concat', fc='multi-dropout', num_feature=2048, classes=1):
         super(ImageModel, self).__init__()
         self.model = create_model(name, pretrained, pool=False)
         
         if pooling == 'concat':
             self.pooling = FastGlobalConcatPool2d()
-            feature *= 2
+            num_feature *= 2
         elif pooling == 'gem':
-            self.pooling = GeM()
+            self.pooling = GeM_cw(num_feature)
         else:
             self.pooling = FastGlobalAvgPool2d()
         
         if fc == 'multi-dropout':
             self.fc = nn.Sequential(
-                        MultiSampleDropoutFC(in_ch=feature, out_ch=classes)
+                        MultiSampleDropoutFC(in_ch=num_feature, out_ch=classes)
                         )
             
         if fc == 'attention':
             self.fc = nn.Sequential(
-                        SEBlock(feature),
-                        MultiSampleDropoutFC(in_ch=feature, out_ch=classes)
+                        SEBlock(num_feature),
+                        MultiSampleDropoutFC(in_ch=num_feature, out_ch=classes)
                         )
             
         elif fc== '2layers':
             self.fc = nn.Sequential(
-                        nn.Linear(feature, 512,  bias=False),
+                        nn.Linear(num_feature, 512,  bias=False),
                         nn.BatchNorm1d(512),
                         torch.nn.SiLU(inplace=True),
                         nn.Dropout(),
                         nn.Linear(512, classes, bias=True),
                         )
         else:
-            self.fc = nn.Linear(in_features=feature, out_features=classes, bias=True)
+            self.fc = nn.Linear(in_features=num_feature, out_features=classes, bias=True)
         
     @autocast()
     def forward(self, x):
