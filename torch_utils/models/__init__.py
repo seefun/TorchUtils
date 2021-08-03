@@ -5,6 +5,7 @@ from torchinfo import summary
 from torch_lr_finder import LRFinder
 
 # TODO: https://github.com/Stonesjtu/pytorch_memlab
+# TODO: https://github.com/Lyken17/pytorch-OpCounter
 
 from .freeze_bn import set_bn_eval
 
