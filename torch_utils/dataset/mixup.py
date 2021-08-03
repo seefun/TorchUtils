@@ -112,7 +112,7 @@ class Mixup:
         >>>     input, target = input.cuda(), target.cuda()
         >>>     input, target = mixup_fn(input, target)
     """
-    def __init__(self, mixup_alpha=1., cutmix_alpha=1., cutmix_minmax=None, prob=0.5, switch_prob=0.3,
+    def __init__(self, mixup_alpha=1.5, cutmix_alpha=1.5, cutmix_minmax=None, prob=0.2, switch_prob=0.3,
                  mode='elem', correct_lam=True, onehot=True, label_smoothing=0.0, num_classes=1000):
         self.mixup_alpha = mixup_alpha
         self.cutmix_alpha = cutmix_alpha
@@ -235,28 +235,37 @@ class Mixup:
     
 class MixupDataset(Dataset):
     """Mixup for soft label (shape [bs,num_class])"""
-    def __init__(self, dataset, alpha=1.0, prob=0.1, mixup_to_cutmix=0.0):
+    def __init__(self, dataset, alpha=1.5, prob=0.1, mixup_to_cutmix=0.0, raw=False):
         self.dataset = dataset
         self.prob = prob
         self.mixup_to_cutmix = mixup_to_cutmix
         self.data_size = len(self)
         self.beta = Beta(torch.FloatTensor([alpha]), torch.FloatTensor([alpha]))
+        self.raw = raw
 
     def __getitem__(self, idx):
         img, label = self.dataset[idx]
-        label = np.array(label) # assert label like [0,1,0,0] or [0.0, 0.9, 0.05, 0.05]
+        label = np.array(label, dtype=np.float32) # assert label like [0,1,0,0] or [0.0, 0.9, 0.05, 0.05]
         if torch.rand(1)[0] < self.prob:
             lam = self.beta.sample().numpy()
             rand_idx = torch.randint(self.data_size,(1,))[0].numpy()
             img_aug, label_aug = self.dataset[rand_idx]
+            label_aug = np.array(label_aug, dtype=np.float32)
             if torch.rand(1)[0] > self.mixup_to_cutmix: # mixup
                 img = img * lam + img_aug * (1 - lam) 
             else: # cutmix
                 (yl, yh, xl, xh), lam = cutmix_bbox_and_lam(img.shape, lam, correct_lam=True)
-                img[:, yl:yh, xl:xh] = img_aug[:, yl:yh, xl:xh] 
-            label = label * lam + label_aug * (1 - lam)        
-        label = label.astype(np.float)
+                img[:, yl:yh, xl:xh] = img_aug[:, yl:yh, xl:xh]
+            if self.raw:
+                return img, label, label_aug, lam
+            label = label * lam + label_aug * (1 - lam)
+            label.astype(np.float32)
+        if self.raw:
+            return img, label, label, 1
         return img, label
 
     def __len__(self):
         return len(self.dataset)
+
+def mixup_criterion(criterion, pred, y_a, y_b, lam):
+    return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
