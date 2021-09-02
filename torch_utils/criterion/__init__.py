@@ -1,8 +1,8 @@
-from .CrossEntropy import LabelSmoothingCrossEntropy, SmoothBCEwLogits
-from .CrossEntropy import SoftTargetCrossEntropy, KLDivLoss
-from .CrossEntropy import topkLoss
+from .cross_entropy import LabelSmoothingCrossEntropy, SmoothBCEwLogits
+from .cross_entropy import SoftTargetCrossEntropy, KLDivLoss
+from .cross_entropy import topkLoss
 
-from .MetricLoss import CircleLoss, ArcFaceLoss, SupConLoss
-from .MetricLoss import InfoNCE
-from .MetricLoss import CrossBatchMemory
-from .MetricLoss import MoCo, SupConLoss_MoCo
+from .metric_loss import CircleLoss, ArcFaceLoss, SupConLoss
+from .metric_loss import InfoNCE
+from .metric_loss import CrossBatchMemory
+from .metric_loss import MoCo, SupConLoss_MoCo
