@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.cuda.amp import autocast
 
-from torch_utils.layers import *
+from torch_utils.models.layers import *
 from torch_utils.models import create_timm_model
 
 
@@ -64,12 +64,12 @@ class UNet_neck(nn.Module):
                  decoder_channels=[64, 64, 64, 64, 64],
                  attention='cbam',
                  drop_first=True):
-        super(UNet).__init__()
+        super().__init__()
         self.drop_first = drop_first
 
         # center
         self.center = CenterBlock(
-            encoder_channels[-1], decoder_channels[0])  # ->(*,512,h/32,w/32)
+            encoder_channels[-1], center_channel)  # ->(*,512,h/32,w/32)
 
         # decoder
         self.decoder4 = DecodeBlock(
@@ -99,7 +99,6 @@ class UNet_neck(nn.Module):
         self.upsample2 = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=True)
         self.upsample1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
-    @autocast()
     def forward(self, inputs):
         # encoder
         x0, x1, x2, x3, x4 = inputs
@@ -131,7 +130,7 @@ class UNet(nn.Module):
                  out_channel=1,
                  attention='cbam',
                  hypercolumns=True):
-        super(UNet).__init__()
+        super().__init__()
         self.backbone = create_timm_model(backbone, pretrained)
         self.attention = attention
         self.hypercolumns = hypercolumns
@@ -147,23 +146,45 @@ class UNet(nn.Module):
             self.neck = None
 
         # final conv
-        if hypercolumns:
-            final_channel = sum(decoder_channels)
+        if neck:
+            if hypercolumns:
+                final_channel = sum(decoder_channels)
+            else:
+                final_channel = decoder_channels[-1]
+                
+            self.final_conv = nn.Sequential(
+                conv3x3(final_channel, decoder_channels[4]).apply(init_weight),
+                nn.SiLU(True),
+                conv1x1(decoder_channels[4], self.out_channel).apply(init_weight)
+            )
         else:
-            final_channel = decoder_channels[-1]
+            if hypercolumns:
+                final_channel = sum(encoder_channels)
+            else:
+                final_channel = encoder_channels[0]
+   
+            self.final_conv = nn.Sequential(
+                conv1x1(final_channel, self.out_channel).apply(init_weight)
+            )
         
-        self.final_conv = nn.Sequential(
-            conv3x3(final_channel, decoder_channels[4]).apply(init_weight),
-            nn.SiLU(True),
-            conv1x1(decoder_channels[4], self.out_channel).apply(init_weight)
-        )
+        # upsample
+        self.upsample4 = nn.Upsample(scale_factor=16, mode='bilinear', align_corners=True)
+        self.upsample3 = nn.Upsample(scale_factor=8, mode='bilinear', align_corners=True)
+        self.upsample2 = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=True)
+        self.upsample1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
     @ autocast()
     def forward(self, inputs):
         # encoder
-        y4, y3, y2, y1, y0 = self.backbone(inputs)
+        y0, y1, y2, y3, y4 = self.backbone(inputs)
         if self.neck:
-            y4, y3, y2, y1, y0 = self.neck([y4, y3, y2, y1, y0])
+            y4, y3, y2, y1, y0 = self.neck([y0, y1, y2, y3, y4])
+        else:
+            y4 = self.upsample1(y4)  # ->(*,64,h//16,w//16)
+            y3 = self.upsample1(y3)  # ->(*,64,h//8,w//8)
+            y2 = self.upsample1(y2)  # ->(*,64,h//4,w//4)
+            y1 = self.upsample1(y1)  # ->(*,64,h//2,w//2)
+            y0 = self.upsample1(y0)  # ->(*,64,h,w)
 
         if self.hypercolumns:
         # hypercolumns
@@ -173,7 +194,7 @@ class UNet(nn.Module):
             y1 = self.upsample1(y1)  # ->(*,64,h,w)
             hypercol = torch.cat([y0, y1, y2, y3, y4], dim=1)
         else:
-            hypercol = y4
+            hypercol = y0
 
         # final conv
         logits = self.final_conv(hypercol)  # ->(*,1,h,w)

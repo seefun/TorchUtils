@@ -1,7 +1,7 @@
 from torch import nn
 from torch.cuda.amp import autocast
 
-from torch_utils.layers import *
+from torch_utils.models.layers import *
 from torch_utils.models import create_timm_model
 
 
