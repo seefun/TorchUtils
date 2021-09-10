@@ -162,10 +162,6 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 - [x] duplicated images finder
 
 ## TODO
-refactor:
-- [ ] import 3rd lib with try
-- [ ] refact layers: move layers.py to model and split into different folders
-- [ ] refact image model into clsmodel and segmodel using timm
 - [ ] add unit test for models
 
 Add features from:
