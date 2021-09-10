@@ -160,6 +160,7 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 
 ## DONE (Update)
 - [x] duplicated images finder
+- [x] UNet
 
 ## TODO
 - [ ] add unit test for models
