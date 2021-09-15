@@ -147,11 +147,6 @@ class CBAM(nn.Module):
 # https://github.com/speedinghzl/CCNet/blob/master/networks/ccnet.py#L99
 
 
-class Flatten(nn.Module):
-    def forward(self, input):
-        return input.view(input.size(0), -1)
-
-
 def gem(x, p=1, eps=1e-6):
     return F.avg_pool2d(x.clamp(min=eps).pow(p), (x.size(-2), x.size(-1))).pow(1. / p)
 
@@ -162,7 +157,7 @@ class GeM(nn.Module):
         self.p = Parameter(torch.ones(1) * p)
         self.eps = eps
         if flatten:
-            self.flatten = Flatten()
+            self.flatten = nn.Flatten()
         else:
             self.flatten = False
 
@@ -185,7 +180,7 @@ class GeM_cw(nn.Module):
         self.p = Parameter(torch.ones(num_channel) * p)
         self.eps = eps
         if flatten:
-            self.flatten = Flatten()
+            self.flatten = nn.Flatten()
         else:
             self.flatten = False
 
@@ -290,7 +285,7 @@ class FReLU(nn.Module):
 def get_simple_fc(in_ch, num_classes, flatten=False):
     if flatten:
         return nn.Sequential(
-            Flatten(),
+            nn.Flatten(),
             nn.Linear(in_ch, 512),
             Swish(inplace=True),
             nn.Dropout(),
@@ -308,7 +303,7 @@ def get_simple_fc(in_ch, num_classes, flatten=False):
 def get_attention_fc(in_ch, num_classes, flatten=False):
     if flatten:
         return nn.Sequential(
-            Flatten(),
+            nn.Flatten(),
             SEBlock(in_ch),
             MultiSampleDropoutFC(in_ch, num_classes),
         )
