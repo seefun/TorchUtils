@@ -164,7 +164,9 @@ class UNet(nn.Module):
                 final_channel = encoder_channels[0]
    
             self.final_conv = nn.Sequential(
-                conv1x1(final_channel, self.out_channel).apply(init_weight)
+                conv1x1(final_channel, self.out_channel * 4).apply(init_weight),
+                nn.SiLU(True),
+                conv3x3(self.out_channel * 4, self.out_channel).apply(init_weight)
             )
         
         # upsample
