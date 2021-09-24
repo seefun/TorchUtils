@@ -270,3 +270,35 @@ def get_unet(name, out_channel, pretrained=True):
                  deepsupervision=False,
                  clshead=False)
     return model
+
+# # Loss Example:
+# # BCE + Lovasz Hinge with deepsupervision
+
+# criterion_bce = nn.BCEWithLogitsLoss().to(device)
+# criterion_lovasz = tu.BinaryLovaszLoss().to(device)
+# criterion_clf = nn.BCEWithLogitsLoss().to(device)
+
+# def criterion_lovasz_hinge_non_empty(criterion, logits_deep, y):
+#     batch,c,h,w = y.size()
+#     y2 = y.view(batch*c,-1)
+#     logits_deep2 = logits_deep.view(batch*c,-1)
+
+#     y_sum = torch.sum(y2, dim=1)
+#     non_empty_idx = (y_sum!=0)
+
+#     if non_empty_idx.sum()==0:
+#         return torch.tensor(0)
+#     else:
+#         loss  = criterion(logits_deep2[non_empty_idx], 
+#                           y2[non_empty_idx])
+#         loss += criterion_lovasz(logits_deep2[non_empty_idx].view(-1,h,w), 
+#                                  y2[non_empty_idx].view(-1,h,w))
+#         return loss
+
+# loss = criterion_bce(logits, y_true)                 
+# loss += criterion_lovasz(logits.view(-1,h,w), y_true.view(-1,h,w))
+# if deepsupervision:
+#     for logits_deep in logits_deeps:
+#          loss += 0.1 * criterion_lovasz_hinge_non_empty(criterion_bce, logits_deep, y_true)
+# if clshead:                        
+#     loss += criterion_clf(logits_clf.squeeze(-1),y_clf)
