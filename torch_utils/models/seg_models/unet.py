@@ -8,9 +8,14 @@ from torch_utils.models import create_timm_model
 
 
 class CenterBlock(nn.Module):
-    def __init__(self, in_channel, out_channel):
+    def __init__(self, in_channel, out_channel, aspp=False, dilations=[1, 6, 12, 18]):
         super().__init__()
-        self.conv = conv3x3(in_channel, out_channel)
+        if aspp:
+            self.conv = ASPP(inplanes=in_channel,
+                             mid_c=out_channel,
+                             dilations=dilations)
+        else:
+            self.conv = conv3x3(in_channel, out_channel)
 
     def forward(self, inputs):
         x = self.conv(inputs)
@@ -64,13 +69,18 @@ class UNet_neck(nn.Module):
                  center_channel=512,
                  decoder_channels=[64, 64, 64, 64, 64],
                  attention='cbam',
-                 drop_first=True):
+                 drop_first=True,
+                 aspp=False,
+                 dilations=[1, 6, 12, 18]):
         super().__init__()
         self.drop_first = drop_first
 
         # center
         self.center = CenterBlock(
-            encoder_channels[-1], center_channel)  # ->(*,512,h/32,w/32)
+            encoder_channels[-1],
+            center_channel,
+            aspp=aspp,
+            dilations=dilations)  # ->(*,512,h/32,w/32)
 
         # decoder
         self.decoder4 = DecodeBlock(
@@ -131,6 +141,8 @@ class UNet(nn.Module):
                  decoder_channels=[64, 64, 64, 64, 64],
                  out_channel=1,
                  attention='cbam',
+                 aspp=False,
+                 dilations=[1, 6, 12, 18],
                  hypercolumns=True,
                  deepsupervision=False,
                  clshead=False):
@@ -145,7 +157,9 @@ class UNet(nn.Module):
                                   center_channel=center_channel,
                                   decoder_channels=decoder_channels,
                                   attention=attention,
-                                  drop_first=drop_first)
+                                  drop_first=drop_first,
+                                  aspp=aspp,
+                                  dilations=dilations)
         else:
             self.neck = None
 
@@ -255,7 +269,7 @@ def get_hrnet(name, out_channel, pretrained=True):
     return model
 
 
-def get_unet(name, out_channel, pretrained=True):
+def get_unet(name, out_channel, aspp=False, pretrained=True):
     encoder_channels = get_encoder_info(name, False)
     model = UNet(backbone=name,
                  pretrained=pretrained,
@@ -266,10 +280,12 @@ def get_unet(name, out_channel, pretrained=True):
                  decoder_channels=[64, 64, 64, 64, 64],
                  out_channel=out_channel,
                  attention='cbam',
+                 aspp=aspp,
                  hypercolumns=True,
                  deepsupervision=False,
                  clshead=False)
     return model
+
 
 # # Loss Example:
 # # BCE + Lovasz Hinge with deepsupervision
@@ -289,16 +305,16 @@ def get_unet(name, out_channel, pretrained=True):
 #     if non_empty_idx.sum()==0:
 #         return torch.tensor(0)
 #     else:
-#         loss  = criterion(logits_deep2[non_empty_idx], 
+#         loss  = criterion(logits_deep2[non_empty_idx],
 #                           y2[non_empty_idx])
-#         loss += criterion_lovasz(logits_deep2[non_empty_idx].view(-1,h,w), 
+#         loss += criterion_lovasz(logits_deep2[non_empty_idx].view(-1,h,w),
 #                                  y2[non_empty_idx].view(-1,h,w))
 #         return loss
 
-# loss = criterion_bce(logits, y_true)                 
+# loss = criterion_bce(logits, y_true)
 # loss += criterion_lovasz(logits.view(-1,h,w), y_true.view(-1,h,w))
 # if deepsupervision:
 #     for logits_deep in logits_deeps:
 #          loss += 0.1 * criterion_lovasz_hinge_non_empty(criterion_bce, logits_deep, y_true)
-# if clshead:                        
+# if clshead:
 #     loss += criterion_clf(logits_clf.squeeze(-1),y_clf)
