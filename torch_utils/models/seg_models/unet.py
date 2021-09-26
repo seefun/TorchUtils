@@ -29,9 +29,9 @@ class DecodeBlock(nn.Module):
         self.upsample = nn.Sequential()
         if upsample:
             self.upsample.add_module('upsample', nn.Upsample(scale_factor=2, mode='nearest'))
-        self.conv3x3_1 = conv3x3(in_channel, in_channel)
-        self.bn2 = nn.BatchNorm2d(in_channel)
-        self.conv3x3_2 = conv3x3(in_channel, out_channel)
+        self.conv3x3_1 = conv3x3(in_channel, out_channel)
+        self.bn2 = nn.BatchNorm2d(out_channel)
+        self.conv3x3_2 = conv3x3(out_channel, out_channel)
         if attention == 'scse':
             self.attention = SCSE(out_channel, r=8)
         elif attention == 'cbam':
