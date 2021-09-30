@@ -170,7 +170,7 @@ class UNet(nn.Module):
             else:
                 final_channel = decoder_channels[-1]
 
-            self.final_conv = nn.Sequential(
+            self.head = nn.Sequential(
                 conv3x3(final_channel, decoder_channels[4]),
                 nn.SiLU(True),
                 conv1x1(decoder_channels[4], self.out_channel)
@@ -181,7 +181,7 @@ class UNet(nn.Module):
             else:
                 final_channel = encoder_channels[0]
 
-            self.final_conv = nn.Sequential(
+            self.head = nn.Sequential(
                 conv1x1(final_channel, self.out_channel * 4),
                 nn.SiLU(True),
                 conv3x3(self.out_channel * 4, self.out_channel)
@@ -244,7 +244,7 @@ class UNet(nn.Module):
             logits_deeps = [s4, s3, s2, s1]
 
         # final conv
-        logits = self.final_conv(hypercol)  # ->(*,1,h,w)
+        logits = self.head(hypercol)  # ->(*,1,h,w)
 
         if self.deepsupervision and self.clshead:
             return logits, logits_deeps, logits_clf
