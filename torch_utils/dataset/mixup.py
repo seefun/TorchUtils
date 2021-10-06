@@ -23,6 +23,7 @@ def mixup_target(target, num_classes, lam=1., smoothing=0.0, device='cuda'):
     y2 = one_hot(target.flip(0), num_classes, on_value=on_value, off_value=off_value, device=device)
     return y1 * lam + y2 * (1. - lam)
 
+
 def mixup_target_multi_binary(target, lam=1., smoothing=0.0, device='cuda'):
     target = target * (1. - smoothing) + smoothing / 2.
     y1 = target.to(device)
@@ -90,7 +91,7 @@ def cutmix_bbox_and_lam(img_shape, lam, ratio_minmax=None, correct_lam=True, cou
 class Mixup:
     """ 
     Mixup/Cutmix that applies different params to each element or whole batch
-    
+
     Args:
         mixup_alpha (float): mixup alpha value, mixup is active if > 0.
         cutmix_alpha (float): cutmix alpha value, cutmix is active if > 0.
@@ -102,7 +103,7 @@ class Mixup:
         onehot (bool): whether one hot dtype Long label input or float multi-hot or soft label
         label_smoothing (float): apply label smoothing to the mixed target tensor
         num_classes (int): number of classes for target
-        
+
     Examples::
         >>> mixup, cutmix = 0.35, 0.15
         >>> prob = mixup + cutmix
@@ -112,6 +113,7 @@ class Mixup:
         >>>     input, target = input.cuda(), target.cuda()
         >>>     input, target = mixup_fn(input, target)
     """
+
     def __init__(self, mixup_alpha=0.2, cutmix_alpha=1.0, cutmix_minmax=None, prob=0.2, switch_prob=0.3,
                  mode='elem', correct_lam=True, onehot=True, label_smoothing=0.0, num_classes=1000):
         self.mixup_alpha = mixup_alpha
@@ -231,10 +233,11 @@ class Mixup:
         else:
             target = mixup_target_multi_binary(target, lam, self.label_smoothing, device=x.device)
         return x, target
-    
-    
+
+
 class MixupDataset(Dataset):
     """Mixup for soft label (shape [bs,num_class])"""
+
     def __init__(self, dataset, alpha=0.2, prob=0.1, mixup_to_cutmix=0.0, raw=False):
         self.dataset = dataset
         self.prob = prob
@@ -245,15 +248,15 @@ class MixupDataset(Dataset):
 
     def __getitem__(self, idx):
         img, label = self.dataset[idx]
-        label = np.array(label, dtype=np.float32) # assert label like [0,1,0,0] or [0.0, 0.9, 0.05, 0.05]
+        label = np.array(label, dtype=np.float32)  # assert label like [0,1,0,0] or [0.0, 0.9, 0.05, 0.05]
         if torch.rand(1)[0] < self.prob:
             lam = self.beta.sample().numpy()
-            rand_idx = torch.randint(self.data_size,(1,))[0].numpy()
+            rand_idx = torch.randint(self.data_size, (1,))[0].numpy()
             img_aug, label_aug = self.dataset[rand_idx]
             label_aug = np.array(label_aug, dtype=np.float32)
-            if torch.rand(1)[0] > self.mixup_to_cutmix: # mixup
+            if torch.rand(1)[0] > self.mixup_to_cutmix:  # mixup
                 img = img * lam + img_aug * (1 - lam) 
-            else: # cutmix
+            else:  # cutmix
                 (yl, yh, xl, xh), lam = cutmix_bbox_and_lam(img.shape, lam, correct_lam=True)
                 img[:, yl:yh, xl:xh] = img_aug[:, yl:yh, xl:xh]
             if self.raw:
@@ -266,6 +269,7 @@ class MixupDataset(Dataset):
 
     def __len__(self):
         return len(self.dataset)
+
 
 def mixup_criterion(criterion, pred, y_a, y_b, lam):
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)

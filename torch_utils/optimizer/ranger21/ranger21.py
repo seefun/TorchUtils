@@ -291,7 +291,7 @@ class Ranger21(TO.Optimizer):
             self.tracking_variance_normalized = []
 
         # display
-        engine = "AdamW" if not self.use_madgrad else "MadGrad"
+        # engine = "AdamW" if not self.use_madgrad else "MadGrad"
 
         # print out initial settings to make usage easier
 
@@ -323,7 +323,8 @@ class Ranger21(TO.Optimizer):
         print(f"Learning rate of {self.starting_lr}\n")
 
         print(
-            f"Important - num_epochs of training = ** {self.num_epochs} epochs **\nplease confirm this is correct or warmup and warmdown will be off\n"
+            f"Important - num_epochs of training = ** {self.num_epochs} epochs **\n"
+            "please confirm this is correct or warmup and warmdown will be off\n"
         )
 
         if self.use_adabelief:
@@ -353,7 +354,8 @@ class Ranger21(TO.Optimizer):
 
         if self.warmdown_active:
             print(
-                f"\nWarm-down: Linear warmdown, starting at {self.warm_down_start_pct*100}%, iteration {self.start_warm_down} of {self.total_iterations}"
+                f"\nWarm-down: Linear warmdown, starting at {self.warm_down_start_pct*100}%,"
+                "iteration {self.start_warm_down} of {self.total_iterations}"
             )
             print(f"warm down will decay until {self.min_lr} lr")
 
@@ -706,7 +708,7 @@ class Ranger21(TO.Optimizer):
 
         # stable weight decay
         if self.use_madgrad:
-            variance_normalized = torch.pow(variance_ma_sum / param_size, 1/3)
+            variance_normalized = torch.pow(variance_ma_sum / param_size, 1 / 3)
         else:
             variance_normalized = math.sqrt(variance_ma_sum / param_size)
         # variance_mean = variance_ma_sum / param_size
@@ -733,7 +735,7 @@ class Ranger21(TO.Optimizer):
 
             # Perform stable weight decay
             decay = group["weight_decay"]
-            eps = group["eps"]
+            # eps = group["eps"]
             lr = group["lr"]
             momentum = group["momentum"]
 
@@ -753,7 +755,7 @@ class Ranger21(TO.Optimizer):
             # warmdown
             # ==========
             if self.warmdown_active:
-                orig_lr = lr
+                # orig_lr = lr
                 lr = self.get_warm_down(lr, step)
                 assert lr > 0, "lr went negative"
 

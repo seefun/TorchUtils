@@ -8,6 +8,7 @@ popular_models = {
     'seresnext50_32x4d': 2048,
 }
 
+
 def create_timm_model(name, pretrained, num_classes=0):
     if num_classes:
         model = timm.create_model(name, pretrained=pretrained, num_classes=num_classes)

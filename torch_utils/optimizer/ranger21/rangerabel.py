@@ -49,7 +49,7 @@ class Ranger21abel(TO.Optimizer):
         num_batches_per_epoch=None,
         num_epochs=None,
         use_abel=True,
-        abel_decay_factor = .3,
+        abel_decay_factor=.3,
         use_warmup=True,
         num_warmup_iterations=None,
         weight_decay=1e-4,
@@ -76,14 +76,14 @@ class Ranger21abel(TO.Optimizer):
 
         # abel
         self.use_abel = use_abel
-        self.weight_list=[]
-        self.batch_count =0
+        self.weight_list = []
+        self.batch_count = 0
         self.epoch = 0
         self.lr_decay_factor = abel_decay_factor
         self.abel_decay_end = math.ceil(self.num_epochs * .85)
         self.reached_minima = False
         self.pweight_accumulator = 0
-        
+
         # decay
         self.decay = weight_decay
         self.decay_type = decay_type
@@ -101,8 +101,6 @@ class Ranger21abel(TO.Optimizer):
         # logging
         self.variance_sum_tracking = []
 
-        
-
         # print out initial settings to make usage easier
         print(f"Ranger21 optimizer ready with following settings:\n")
         print(f"Learning rate of {self.starting_lr}")
@@ -119,7 +117,6 @@ class Ranger21abel(TO.Optimizer):
 
     def __setstate__(self, state):
         super().__setstate__(state)
-
 
     def warmup_dampening(self, lr, step):
         # not usable yet
@@ -149,38 +146,37 @@ class Ranger21abel(TO.Optimizer):
 
     def abel_update(self, step_fn, weight_norm, current_lr):
         ''' update lr based on abel'''
-        
+
         self.pweight_accumulator += weight_norm
 
-        
-        self.batch_count +=1
-        #print(f"self.batch count = {self.batch_count}")
+        self.batch_count += 1
+        # print(f"self.batch count = {self.batch_count}")
         if self.batch_count == self.num_batches:
-            self.epoch +=1
+            self.epoch += 1
             self.batch_count = 0
             print(f"epoch eval for epoch {self.epoch}")
 
-            #store weights
+            # store weights
             self.weight_list.append(self.pweight_accumulator)
-            
+
             print(f"total norm for epoch {self.epoch} = {weight_norm}")
-            #self.pweight_accumulator = 0
-        
-        if self.batch_count !=0:
+            # self.pweight_accumulator = 0
+
+        if self.batch_count != 0:
             return None
-        #self.epoch +=1
+        # self.epoch +=1
         new_lr = current_lr
 
         if len(self.weight_list) < 3:
             print(len(self.weight_list))
             return step_fn
-        
+
         # compute weight norm delta
         if (self.weight_list[-1] - self.weight_list[-2]) * (self.weight_list[-2] - self.weight_list[-3]) < 0:
             if self.reached_minima:
                 self.reached_minima = False
                 new_lr *= self.lr_decay_factor
-                #step_fn = self.update_train_step(self.learning_rate)
+                # step_fn = self.update_train_step(self.learning_rate)
             else:
                 self.reached_minima = True
             print(f"\n*****\nABEL mininum detected, new lr = {new_lr}\n***\n")
@@ -190,6 +186,7 @@ class Ranger21abel(TO.Optimizer):
             print(f"abel final decay done, new lr = {new_lr}")
         return new_lr
     # @staticmethod
+
     @torch.no_grad()
     def step(self, closure=None):
 
@@ -201,7 +198,6 @@ class Ranger21abel(TO.Optimizer):
         param_size = 0
         variance_ma_sum = 0.0
         weight_norm = 0
-
 
         # phase 1 - accumulate all of the variance_ma_sum to use in stable weight decay
 
@@ -221,7 +217,7 @@ class Ranger21abel(TO.Optimizer):
                 state = self.state[p]
 
                 current_weight_norm = LA.norm(p.data)
-                #print(f"running norm = {current_weight_norm}")
+                # print(f"running norm = {current_weight_norm}")
                 weight_norm += current_weight_norm.item()
 
                 # State initialization
@@ -296,7 +292,7 @@ class Ranger21abel(TO.Optimizer):
                 # Perform stable weight decay
                 decay = group["weight_decay"]
                 eps = group["eps"]
-                #lr = group["lr"]
+                # lr = group["lr"]
                 lr = self.current_lr
 
                 if self.use_warmup:
@@ -318,12 +314,12 @@ class Ranger21abel(TO.Optimizer):
 
                 denom = variance_biased_ma.sqrt().add(eps)
 
-                weight_mod = grad_exp_avg / denom
-                
+                # weight_mod = grad_exp_avg / denom
+
                 step_size = lr / bias_correction1
 
                 # update weights
-                #p.data.add_(weight_mod, alpha=-step_size)
+                # p.data.add_(weight_mod, alpha=-step_size)
                 p.addcdiv_(grad_exp_avg, denom, value=-step_size)
 
             # abel step

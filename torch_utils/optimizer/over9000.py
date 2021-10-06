@@ -1,11 +1,13 @@
 # https://github.com/mgrankin/over9000
 
-import torch, math
+import torch
+import math
 import itertools as it
 from torch.optim import Optimizer, Adam
 
+
 class Lookahead(Optimizer):
-    def __init__(self, base_optimizer,alpha=0.5, k=6):
+    def __init__(self, base_optimizer, alpha=0.5, k=6):
         if not 0.0 <= alpha <= 1.0:
             raise ValueError(f'Invalid slow update rate: {alpha}')
         if not 1 <= k:
@@ -17,7 +19,7 @@ class Lookahead(Optimizer):
         for group in self.param_groups:
             group["step_counter"] = 0
         self.slow_weights = [[p.clone().detach() for p in group['params']]
-                                for group in self.param_groups]
+                             for group in self.param_groups]
 
         for w in it.chain(*self.slow_weights):
             w.requires_grad = False
@@ -27,23 +29,25 @@ class Lookahead(Optimizer):
         if closure is not None:
             loss = closure()
         loss = self.optimizer.step()
-        for group,slow_weights in zip(self.param_groups,self.slow_weights):
+        for group, slow_weights in zip(self.param_groups, self.slow_weights):
             group['step_counter'] += 1
             if group['step_counter'] % self.k != 0:
                 continue
-            for p,q in zip(group['params'],slow_weights):
+            for p, q in zip(group['params'], slow_weights):
                 if p.grad is None:
                     continue
-                q.data.add_(self.alpha,p.data - q.data)
+                q.data.add_(self.alpha, p.data - q.data)
                 p.data.copy_(q.data)
         return loss
 
 
 def LookaheadAdam(params, alpha=0.5, k=6, *args, **kwargs):
-     adam = Adam(params, *args, **kwargs)
-     return Lookahead(adam, alpha, k)
-     
+    adam = Adam(params, *args, **kwargs)
+    return Lookahead(adam, alpha, k)
+
 # RAdam + LARS
+
+
 class Ralamb(Optimizer):
 
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0):
@@ -104,7 +108,8 @@ class Ralamb(Optimizer):
 
                     # more conservative since it's an approximated value
                     if N_sma >= 5:
-                        radam_step = group['lr'] * math.sqrt((1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (N_sma_max - 2)) / (1 - beta1 ** state['step'])
+                        radam_step = group['lr'] * math.sqrt((1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) *
+                                                             (N_sma - 2) / N_sma * N_sma_max / (N_sma_max - 2)) / (1 - beta1 ** state['step'])
                     else:
                         radam_step = group['lr'] / (1 - beta1 ** state['step'])
                     buffered[2] = radam_step
@@ -133,14 +138,15 @@ class Ralamb(Optimizer):
                 p.data.copy_(p_data_fp32)
 
         return loss
-        
+
 
 # RAdam + LARS + LookAHead
 # Lookahead implementation from https://github.com/lonePatient/lookahead_pytorch/blob/master/optimizer.py
 # RAdam + LARS implementation from https://gist.github.com/redknightlois/c4023d393eb8f92bb44b2ab582d7ec20
 
 def Over9000(params, alpha=0.5, k=6, *args, **kwargs):
-     ralamb = Ralamb(params, *args, **kwargs)
-     return Lookahead(ralamb, alpha, k)
+    ralamb = Ralamb(params, *args, **kwargs)
+    return Lookahead(ralamb, alpha, k)
+
 
 RangerLars = Over9000

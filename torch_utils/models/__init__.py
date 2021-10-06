@@ -16,6 +16,7 @@ except:
 try:
     import thop
     import torch
+
     def profile(model, input_shape=(1, 3, 224, 224)):
         macs, params = thop.profile(model, inputs=(torch.randn(*input_shape), ))
         return {'macs': macs, 'params': params}
