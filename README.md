@@ -166,7 +166,7 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 - [ ] add unit test for models
 
 Add features from:
-- [ ] [Ranger21](https://github.com/lessw2020/Ranger21) (optimizer and lr_scheduler)
+- [x] [Ranger21](https://github.com/lessw2020/Ranger21) (optimizer and lr_scheduler)
 - [ ] [torchdistill](https://github.com/yoshitomo-matsubara/torchdistill)
 - [ ] [flops-counter](https://github.com/sovrasov/flops-counter.pytorch)
 
