@@ -112,7 +112,7 @@ class Mixup:
         >>>     input, target = input.cuda(), target.cuda()
         >>>     input, target = mixup_fn(input, target)
     """
-    def __init__(self, mixup_alpha=1.5, cutmix_alpha=1.5, cutmix_minmax=None, prob=0.2, switch_prob=0.3,
+    def __init__(self, mixup_alpha=0.2, cutmix_alpha=1.0, cutmix_minmax=None, prob=0.2, switch_prob=0.3,
                  mode='elem', correct_lam=True, onehot=True, label_smoothing=0.0, num_classes=1000):
         self.mixup_alpha = mixup_alpha
         self.cutmix_alpha = cutmix_alpha
@@ -235,7 +235,7 @@ class Mixup:
     
 class MixupDataset(Dataset):
     """Mixup for soft label (shape [bs,num_class])"""
-    def __init__(self, dataset, alpha=1.5, prob=0.1, mixup_to_cutmix=0.0, raw=False):
+    def __init__(self, dataset, alpha=0.2, prob=0.1, mixup_to_cutmix=0.0, raw=False):
         self.dataset = dataset
         self.prob = prob
         self.mixup_to_cutmix = mixup_to_cutmix
