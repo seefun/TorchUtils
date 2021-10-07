@@ -29,6 +29,7 @@ def _flat_anneal_schedule(iter, max_iter, warmup_iter=0, decay_start=0.5, anneal
 
 
 def get_scheduler(optimizer, lmbda):
+    # support multiple parameter groups
     num_param_groups = len(optimizer.param_groups)
     return LambdaLR(optimizer, lr_lambda=[lmbda] * num_param_groups)
 
