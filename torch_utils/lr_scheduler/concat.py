@@ -24,6 +24,8 @@ class ConcatLR(torch.optim.lr_scheduler._LRScheduler):
 
 # Example: (from https://github.com/mgrankin/over9000/blob/master/train.py)
 #
+# Attention !!!: torch.optim.lr_scheduler.SequentialLR is able to replace ConcatLR
+#
 # from torch.optim.lr_scheduler import LambdaLR, CosineAnnealingLR, OneCycleLR
 #
 # def d(x): 
