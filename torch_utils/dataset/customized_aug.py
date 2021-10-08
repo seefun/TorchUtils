@@ -1,4 +1,7 @@
 # compatible with albumentations
+# warning: this code used np.random other than torch.random (the same as albumentations);
+#          should use tu.tools.worker_init_fn to avoid bug in seed inherit when using pytorch dataloader.
+# seefun 2021.10
 import math
 import numpy as np
 from albumentations import ImageOnlyTransform
