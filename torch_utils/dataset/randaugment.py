@@ -5,7 +5,7 @@ Re-implement (changed) using albumentations by seefun
 """
 
 import numpy as np
-import albumentations  # albumentations 1.0.0
+import albumentations  # albumentations >= 1.0.0
 
 
 def randAugment(N=2, M=4, p=1.0, mode="all", cut_out=False):

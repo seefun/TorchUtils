@@ -11,7 +11,7 @@ train_transform_randaug = albumentations.Compose([
     albumentations.Flip(p=0.5),
     randAugment(),
     albumentations.Normalize(),
-    albumentations.Cutout(num_holes=8, max_h_size=IMAGE_SIZE // 8, max_w_size=IMAGE_SIZE // 8, fill_value=0, p=0.25),
+    albumentations.CoarseDropout(max_holes=8, max_height=IMAGE_SIZE // 8, max_width=IMAGE_SIZE // 8, fill_value=0, p=0.25),
     AT.ToTensorV2(),
 ])
 
