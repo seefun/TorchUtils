@@ -1,7 +1,7 @@
 from torch import nn
 from torch.cuda.amp import autocast
 
-from torch_utils.models.layers import *
+from torch_utils.models.layers import FastGlobalConcatPool2d, FastGlobalAvgPool2d, GeM_cw, MultiSampleDropoutFC, SEBlock
 from torch_utils.models import create_timm_model
 
 
@@ -27,14 +27,12 @@ class ImageModel(nn.Module):
 
         if fc == 'multi-dropout':
             self.fc = nn.Sequential(
-                        MultiSampleDropoutFC(in_ch=num_feature, out_ch=classes)
-                        )
+                        MultiSampleDropoutFC(in_ch=num_feature, out_ch=classes))
 
         if fc == 'attention':
             self.fc = nn.Sequential(
                         SEBlock(num_feature),
-                        MultiSampleDropoutFC(in_ch=num_feature, out_ch=classes)
-                        )
+                        MultiSampleDropoutFC(in_ch=num_feature, out_ch=classes))
 
         elif fc == '2layers':
             self.fc = nn.Sequential(
@@ -42,8 +40,7 @@ class ImageModel(nn.Module):
                         nn.BatchNorm1d(512),
                         nn.SiLU(inplace=True),
                         nn.Dropout(),
-                        nn.Linear(512, classes, bias=True),
-                        )
+                        nn.Linear(512, classes, bias=True))
         else:
             self.fc = nn.Linear(in_features=num_feature, out_features=classes, bias=True)
 

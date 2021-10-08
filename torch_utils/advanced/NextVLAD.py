@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 def general_weight_initialization(module: nn.Module):
     if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d)):
         if module.weight is not None:
@@ -15,6 +16,7 @@ def general_weight_initialization(module: nn.Module):
         # print("Initing linear")
         if module.bias is not None:
             nn.init.constant_(module.bias, 0)
+
 
 class TimeFirstBatchNorm1d(nn.Module):
     def __init__(self, dim, groups=None):
@@ -32,8 +34,8 @@ class TimeFirstBatchNorm1d(nn.Module):
             return tensor.view(-1, length, self.groups, dim)
         else:
             return tensor.view(-1, length, dim)
-    
-    
+
+
 class NeXtVLAD(nn.Module):
     """NeXtVLAD layer implementation
     Adapted from https://github.com/linrongc/youtube-8m/blob/master/nextvlad.py

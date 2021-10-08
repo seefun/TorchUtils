@@ -3,10 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.loss import _WeightedLoss
 
+
 class LabelSmoothingCrossEntropy(nn.Module):
     """
     NLL loss with label smoothing.
     """
+
     def __init__(self, smoothing=0.1):
         """
         Constructor for the LabelSmoothing module.
@@ -25,44 +27,48 @@ class LabelSmoothingCrossEntropy(nn.Module):
         loss = self.confidence * nll_loss + self.smoothing * smooth_loss
         return loss.mean()
 
+
 class SmoothBCEwLogits(_WeightedLoss):
     def __init__(self, weight=None, reduction='mean', smoothing=0.0):
         super().__init__(weight=weight, reduction=reduction)
         self.smoothing = smoothing
         self.weight = weight
         self.reduction = reduction
-        
+
     @staticmethod
-    def _smooth(targets:torch.Tensor, n_labels:int, smoothing=0.0):
-        assert 0<=smoothing<1
+    def _smooth(targets: torch.Tensor, n_labels: int, smoothing=0.0):
+        assert 0 <= smoothing < 1
         with torch.no_grad():
-            targets = targets * (1.0-smoothing) + 0.5*smoothing
+            targets = targets * (1.0 - smoothing) + 0.5 * smoothing
         return targets
-    
+
     def forward(self, inputs, targets):
         targets = SmoothBCEwLogits._smooth(targets, inputs.size(-1), self.smoothing)
         loss = F.binary_cross_entropy_with_logits(inputs, targets, self.weight)
-        
+
         if self.reduction == 'sum':
             loss = loss.sum()
         elif self.reduction == 'mean':
             loss = loss.mean()
         else:
             loss = loss.mean()
-            
+
         return loss
 
+
 class SoftTargetCrossEntropy(nn.Module):
-    
+
     def __init__(self):
         super(SoftTargetCrossEntropy, self).__init__()
 
     def forward(self, x, target):
         loss = torch.sum(-target * F.log_softmax(x, dim=-1), dim=-1)
         return loss.mean()
-    
+
+
 class KLDivLoss(nn.Module):
     """KL-divergence with softmax"""
+
     def __init__(self):
         super(KLDivLoss, self).__init__()
         self.loss = nn.KLDivLoss()
@@ -71,9 +77,11 @@ class KLDivLoss(nn.Module):
         log = F.log_softmax(model_output, dim=1)
         loss = self.loss(log, target)
         return loss
-    
+
+
 class topkLoss(nn.Module):
     """topkLoss: Online Hard Example Mining"""
+
     def __init__(self, loss, top_k=0.75):
         super(topkLoss, self).__init__()
         self.top_k = top_k
@@ -84,9 +92,9 @@ class topkLoss(nn.Module):
         if self.top_k == 1:
             return torch.mean(loss)
         else:
-            valid_loss, idxs = torch.topk(loss, round(self.top_k * loss.size()[0]), dim=0)    
+            valid_loss, idxs = torch.topk(loss, round(self.top_k * loss.size()[0]), dim=0)
             return torch.mean(valid_loss)
-        
+
 # class JsdCrossEntropy(nn.Module):
 #     """ Jensen-Shannon Divergence + Cross-Entropy Loss for AugMix
 #     Based on impl here: https://github.com/google-research/augmix/blob/master/imagenet.py
@@ -96,7 +104,7 @@ class topkLoss(nn.Module):
 #     https://github.com/rwightman/pytorch-image-models/blob/master/timm/loss/jsd.py
 #     require: AugMixDataset(split data) + split_data_collate + JsdCrossEntropy
 #     optional: split bn for different strength of augmentations
-    
+
 #     Example:
 #         >>> num_aug_splits = 3
 #         >>> # from timm.models import convert_splitbn_model

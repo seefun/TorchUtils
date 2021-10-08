@@ -73,11 +73,11 @@ fast build models with torch_utils:
 ```
 model = tu.ImageModel(name='resnest50d', pretrained=True, 
                       pooling='concat', fc='multi-dropout', 
-                      num_feature=2048, classes=1))
+                      num_feature=2048, classes=1)
 model.cuda()
 ```
 
-
+using other libs along with torch_utils:
 ```
 import timm
 
@@ -94,6 +94,12 @@ model = ptcv_get_model('seresnext50_32x4d', pretrained=True)
 model.features.final_pool = tu.layers.GeM() 
 model.output = tu.layers.get_simple_fc(2048, 1)   
 model.cuda()
+```
+
+segmentation models:
+```
+hrnet = tu.get_hrnet(name='hrnet_w18', out_channel=1, pretrained=True).cuda()
+unet = tu.get_unet(name='resnest50d', out_channel=1, aspp=False, pretrained=True).cuda()
 ```
 
 model utils:
@@ -158,15 +164,9 @@ scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max
 Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 
 
-## DONE (Update)
-- [x] duplicated images finder
-- [x] UNet
-
 ## TODO
 - [ ] add unit test for models
 
 Add features from:
-- [ ] [Ranger21](https://github.com/lessw2020/Ranger21) (optimizer and lr_scheduler)
 - [ ] [torchdistill](https://github.com/yoshitomo-matsubara/torchdistill)
 - [ ] [flops-counter](https://github.com/sovrasov/flops-counter.pytorch)
-

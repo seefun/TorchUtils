@@ -63,13 +63,13 @@ class Ranger(Optimizer):
         self.use_gc = use_gc
         self.gc_conv_only = gc_conv_only
         # level of gradient centralization
-        #self.gc_gradient_threshold = 3 if gc_conv_only else 1
+        # self.gc_gradient_threshold = 3 if gc_conv_only else 1
 
         print(
             f"Ranger optimizer loaded. \nGradient Centralization usage = {self.use_gc}")
-        if (self.use_gc and self.gc_conv_only == False):
+        if (self.use_gc and (self.gc_conv_only is False)):
             print(f"GC applied to both conv and fc layers")
-        elif (self.use_gc and self.gc_conv_only == True):
+        elif (self.use_gc and (self.gc_conv_only is True)):
             print(f"GC applied to conv layers only")
 
     def __setstate__(self, state):
@@ -82,7 +82,7 @@ class Ranger(Optimizer):
         # Uncomment if you need to use the actual closure...
 
         # if closure is not None:
-        #loss = closure()
+        # loss = closure()
 
         # Evaluate averages and grad, update param tensors
         for group in self.param_groups:
@@ -103,7 +103,7 @@ class Ranger(Optimizer):
                 if len(state) == 0:  # if first time to run...init dictionary with our desired entries
                     # if self.first_run_check==0:
                     # self.first_run_check=1
-                    #print("Initializing slow buffer...should not see this at load from saved model!")
+                    # print("Initializing slow buffer...should not see this at load from saved model!")
                     state['step'] = 0
                     state['exp_avg'] = torch.zeros_like(p_data_fp32)
                     state['exp_avg_sq'] = torch.zeros_like(p_data_fp32)
@@ -123,7 +123,7 @@ class Ranger(Optimizer):
 
                 # GC operation for Conv layers and FC layers
                 # if grad.dim() > self.gc_gradient_threshold:
-                #    grad.add_(-grad.mean(dim=tuple(range(1, grad.dim())), keepdim=True))
+                # grad.add_(-grad.mean(dim=tuple(range(1, grad.dim())), keepdim=True))
                 if self.gc_loc:
                     grad = centralized_gradient(grad, use_gc=self.use_gc, gc_conv_only=self.gc_conv_only)
 
@@ -154,8 +154,8 @@ class Ranger(Optimizer):
                     buffered[2] = step_size
 
                 # if group['weight_decay'] != 0:
-                #    p_data_fp32.add_(-group['weight_decay']
-                #                     * group['lr'], p_data_fp32)
+                # p_data_fp32.add_(-group['weight_decay']
+                # * group['lr'], p_data_fp32)
 
                 # apply lr
                 if N_sma > self.N_sma_threshhold:
@@ -167,7 +167,7 @@ class Ranger(Optimizer):
                 if group['weight_decay'] != 0:
                     G_grad.add_(p_data_fp32, alpha=group['weight_decay'])
                 # GC operation
-                if self.gc_loc == False:
+                if self.gc_loc is False:
                     G_grad = centralized_gradient(G_grad, use_gc=self.use_gc, gc_conv_only=self.gc_conv_only)
 
                 p_data_fp32.add_(G_grad, alpha=-step_size * group['lr'])
