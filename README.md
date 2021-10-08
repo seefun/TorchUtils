@@ -166,7 +166,3 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 
 ## TODO
 - [ ] add unit test for models
-
-Add features from:
-- [ ] [torchdistill](https://github.com/yoshitomo-matsubara/torchdistill)
-- [ ] [flops-counter](https://github.com/sovrasov/flops-counter.pytorch)

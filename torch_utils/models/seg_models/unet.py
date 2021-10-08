@@ -196,10 +196,16 @@ class UNet(nn.Module):
         # deepsupervision
         self.deepsupervision = deepsupervision
         if self.deepsupervision:
-            self.deep4 = conv1x1(decoder_channels[0], 1)
-            self.deep3 = conv1x1(decoder_channels[1], 1)
-            self.deep2 = conv1x1(decoder_channels[2], 1)
-            self.deep1 = conv1x1(decoder_channels[3], 1)
+            if neck:
+                self.deep4 = conv1x1(decoder_channels[0], 1)
+                self.deep3 = conv1x1(decoder_channels[1], 1)
+                self.deep2 = conv1x1(decoder_channels[2], 1)
+                self.deep1 = conv1x1(decoder_channels[3], 1)
+            else:
+                self.deep4 = conv1x1(encoder_channels[-1], 1)
+                self.deep3 = conv1x1(encoder_channels[-2], 1)
+                self.deep2 = conv1x1(encoder_channels[-3], 1)
+                self.deep1 = conv1x1(encoder_channels[-4], 1)
 
         # classification head
         self.clshead = clshead
