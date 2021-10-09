@@ -55,10 +55,10 @@ class SGD_GCC(Optimizer):
                 if weight_decay != 0:
                     d_p.add_(weight_decay, p.data)
 
-                #GC operation for Conv layers
-                if len(list(d_p.size()))>3:
-                   d_p.add_(-d_p.mean(dim = tuple(range(1,len(list(d_p.size())))), keepdim = True))
-                   
+                # GC operation for Conv layers
+                if len(list(d_p.size())) > 3:
+                    d_p.add_(-d_p.mean(dim=tuple(range(1, len(list(d_p.size())))), keepdim=True))
+
                 if momentum != 0:
                     param_state = self.state[p]
                     if 'momentum_buffer' not in param_state:
@@ -122,9 +122,9 @@ class SGD_GC(Optimizer):
                 if weight_decay != 0:
                     d_p.add_(weight_decay, p.data)
 
-                #GC operation for Conv layers and FC layers
-                if len(list(d_p.size()))>1:
-                   d_p.add_(-d_p.mean(dim = tuple(range(1,len(list(d_p.size())))), keepdim = True))
+                # GC operation for Conv layers and FC layers
+                if len(list(d_p.size())) > 1:
+                    d_p.add_(-d_p.mean(dim=tuple(range(1, len(list(d_p.size())))), keepdim=True))
 
                 if momentum != 0:
                     param_state = self.state[p]
@@ -157,7 +157,7 @@ class AdamW_GCC2(Optimizer):
         weight_decay (float, optional): weight decay (L2 penalty) (default: 5e-5)
         amsgrad (boolean, optional): whether to use the AMSGrad variant of this
             algorithm from the paper `On the Convergence of Adam and Beyond`_
-    .. _Adam\: A Method for Stochastic Optimization:
+    .. _Adam: A Method for Stochastic Optimization:
         https://arxiv.org/abs/1412.6980
     .. _On the Convergence of Adam and Beyond:
         https://openreview.net/forum?id=ryQu7f-RZ
@@ -219,10 +219,10 @@ class AdamW_GCC2(Optimizer):
                     max_exp_avg_sq = state['max_exp_avg_sq']
                 beta1, beta2 = group['betas']
 
-                #GC operation for Conv layers
-                if len(list(grad.size()))>3:     
-                   weight_mean=p.data.mean(dim = tuple(range(1,len(list(grad.size())))), keepdim = True)
-                   grad.add_(-grad.mean(dim = tuple(range(1,len(list(grad.size())))), keepdim = True))
+                # GC operation for Conv layers
+                if len(list(grad.size())) > 3:
+                    # weight_mean = p.data.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True)
+                    grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 state['step'] += 1
 
@@ -245,12 +245,11 @@ class AdamW_GCC2(Optimizer):
                 step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
 
                 # GC operation for Conv layers
-                if len(list(grad.size()))>3:
-                  delta=(step_size*torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom)).clone()
-                  delta.add_(-delta.mean(dim = tuple(range(1,len(list(grad.size())))), keepdim = True))
-                  p.data.add_(-delta)
+                if len(list(grad.size())) > 3:
+                    delta = (step_size * torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom)).clone()
+                    delta.add_(-delta.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
+                    p.data.add_(-delta)
                 else:
-                  p.data.add_(-step_size,  torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom) )
-                
-               
+                    p.data.add_(-step_size, torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom))
+
         return loss

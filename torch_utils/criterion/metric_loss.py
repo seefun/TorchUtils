@@ -17,14 +17,16 @@ InfoNCE = NTXentLoss
 CrossBatchMemory = CrossBatchMemory
 # CrossBatchMemory(loss, embedding_size, memory_size=1024, miner=None)
 
+
 class MoCo(CrossBatchMemory):
     def __init__(self, embedding_size, memory_size):
-        super(MoCo, self).__init__(NTXentLoss(temperature = 0.1),
+        super(MoCo, self).__init__(NTXentLoss(temperature=0.1),
                                    embedding_size,
                                    memory_size)
-        
+
+
 class SupConLoss_MoCo(CrossBatchMemory):
     def __init__(self, embedding_size, memory_size):
-        super(SupConLoss_MoCo, self).__init__(SupConLoss(temperature = 0.1),
+        super(SupConLoss_MoCo, self).__init__(SupConLoss(temperature=0.1),
                                               embedding_size,
                                               memory_size)

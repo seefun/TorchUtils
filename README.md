@@ -26,20 +26,55 @@ tu.tools.seed_everything(SEED)
 ## Data Augmentation
 
 ```
+import albumentations
+from albumentations import pytorch as AT
 train_transform = albumentations.Compose([
     albumentations.Resize(IMAGE_SIZE, IMAGE_SIZE),
     albumentations.HorizontalFlip(p=0.5),
     tu.dataset.randAugment(image_size=IMAGE_SIZE, N=2, M=12, p=0.9, mode='all', cut_out=False),
     albumentations.Normalize(),
-    albumentations.Cutout(num_holes=8, max_h_size=IMAGE_SIZE//8, max_w_size=IMAGE_SIZE//8, fill_value=0, p=0.25),
+    albumentations.CoarseDropout(max_holes=8, max_height=IMAGE_SIZE // 8, max_width=IMAGE_SIZE // 8, fill_value=0, p=0.25),
     AT.ToTensorV2(),
     ])
 
-mixup_dataset = tu.dataset.MixupDataset(dataset, alpha=1.0, prob=0.1, mixup_to_cutmix=0.3) 
-# 0.07 mixup and 0.03 cutmix
+mixup_dataset = tu.dataset.MixupDataset(dataset, alpha=0.2, prob=0.2, mixup_to_cutmix=0.25) 
+# 0.15 mixup and 0.05 cutmix
 ```
 
 ## Model
+
+fast build models with torch_utils: 
+```
+model = tu.ImageModel(name='resnest50d', pretrained=True, 
+                      pooling='concat', fc='multi-dropout', 
+                      num_feature=2048, classes=1)
+model.cuda()
+```
+
+using other libs along with torch_utils:
+```
+import timm
+
+model = timm.create_model('tresnet_m', pretrained=True)
+model.global_pool = tu.layers.FastGlobalConcatPool2d(flatten=True)
+model.head = tu.layers.get_attention_fc(2048*2, 1) 
+model.cuda()
+```
+
+```
+from pytorchcv.model_provider import get_model as ptcv_get_model
+
+model = ptcv_get_model('seresnext50_32x4d', pretrained=True)
+model.features.final_pool = tu.layers.GeM() 
+model.output = tu.layers.get_simple_fc(2048, 1)   
+model.cuda()
+```
+
+segmentation models:
+```
+hrnet = tu.get_hrnet(name='hrnet_w18', out_channel=1, pretrained=True).cuda()
+unet = tu.get_unet(name='resnest50d', out_channel=1, aspp=False, pretrained=True).cuda()
+```
 
 recommanded pretrained models:
 
@@ -67,39 +102,12 @@ recommanded github repos：
 - [pytorch-encoding](https://github.com/zhanghang1989/PyTorch-Encoding)
 - [pretrained-models-pytorch](https://github.com/Cadene/pretrained-models.pytorch)
 
-
-
-fast build models with torch_utils: 
-```
-model = tu.ImageModel(name='resnest50d', pretrained=True, 
-                      pooling='concat', fc='multi-dropout', 
-                      num_feature=2048, classes=1))
-model.cuda()
-```
-
-
-```
-import timm
-
-model = timm.create_model('tresnet_m', pretrained=True)
-model.global_pool = tu.layers.FastGlobalConcatPool2d(flatten=True)
-model.head = tu.layers.get_attention_fc(2048*2, 1) 
-model.cuda()
-```
-
-```
-from pytorchcv.model_provider import get_model as ptcv_get_model
-
-model = ptcv_get_model('seresnext50_32x4d', pretrained=True)
-model.features.final_pool = tu.layers.GeM() 
-model.output = tu.layers.get_simple_fc(2048, 1)   
-model.cuda()
-```
-
 model utils:
 ```
 # model summary
-tu.summary(model, input_size=(batch_size, 1, 28, 28))
+tu.summary(model, input_size=(batch_size, 3, 224, 224))
+# macs and flops
+tu.profile(model, input_shape=(batch_size, 3, 224, 224))
 
 # 3 channels pretrained weights to 1 channel
 weight_rgb = model.conv1.weight.data
@@ -122,7 +130,6 @@ model.conv1.weight.data = weight_rgby
 ## Optimizer
 ```
 optimizer_ranger = tu.Ranger(model_conv.parameters(), lr=LR)
-
 # optimizer = torch.optim.AdamW(model_conv.parameters(), lr=LR, weight_decay=2e-4)
 ```
 
@@ -130,7 +137,9 @@ optimizer_ranger = tu.Ranger(model_conv.parameters(), lr=LR)
 ## Criterion
 ```
 # for example:
-criterion = tu.LabelSmoothingCrossEntropy()
+criterion = tu.SmoothBCEwLogits(smoothing=0.02)
+
+# criterion = tu.LabelSmoothingCrossEntropy()
 ```
 
 
@@ -145,10 +154,10 @@ lr_finder.reset() # to reset the model and optimizer to their initial state
 
 ## LR Scheduler
 ```
-scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max=LR, T_up=0, gamma=0.05)
+scheduler = tu.get_flat_anneal_scheduler(optimizer, max_iter, warmup_iter=0, decay_start=0.5, anneal='cos', gamma=0.05)
 
+# scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max=LR, T_up=0, gamma=0.05)
 # torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult=1, eta_min=0, last_epoch=-1)
-
 # torch.optim.lr_scheduler.OneCycleLR or tu.OneCycleScheduler
 ```
 
@@ -158,12 +167,5 @@ scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max
 Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 
 
-## DONE (Update)
-- [x] duplicated images finder
-
 ## TODO
-Add features from:
-- [ ] [Ranger21](https://github.com/lessw2020/Ranger21) (optimizer and lr_scheduler)
-- [ ] [torchdistill](https://github.com/yoshitomo-matsubara/torchdistill)
-- [ ] [flops-counter](https://github.com/sovrasov/flops-counter.pytorch)
-
+- [ ] add unit test for models

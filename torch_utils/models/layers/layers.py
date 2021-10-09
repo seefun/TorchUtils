@@ -3,23 +3,54 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.nn.parameter import Parameter
+from torch.nn import init
 
-# Attention 
+
+def conv3x3(in_channel, out_channel):  # not change resolusion
+    return nn.Conv2d(in_channel, out_channel,
+                     kernel_size=3, stride=1, padding=1, dilation=1, bias=False)
+
+
+def conv1x1(in_channel, out_channel):  # not change resolution
+    return nn.Conv2d(in_channel, out_channel,
+                     kernel_size=1, stride=1, padding=0, dilation=1, bias=False)
+
+
+def init_weight(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+        if m.bias is not None:
+            m.bias.data.zero_()
+    elif classname.find('Batch') != -1:
+        m.weight.data.normal_(1, 0.02)
+        m.bias.data.zero_()
+    elif classname.find('Linear') != -1:
+        nn.init.orthogonal_(m.weight, gain=1)
+        if m.bias is not None:
+            m.bias.data.zero_()
+    elif classname.find('Embedding') != -1:
+        nn.init.orthogonal_(m.weight, gain=1)
+
+# Attention
+
+
 class CSE(nn.Module):
     def __init__(self, in_ch, r):
         super(CSE, self).__init__()
-        self.linear_1 = nn.Linear(in_ch, in_ch//r)
-        self.linear_2 = nn.Linear(in_ch//r, in_ch)
+        self.linear_1 = nn.Linear(in_ch, in_ch // r)
+        self.linear_2 = nn.Linear(in_ch // r, in_ch)
 
     def forward(self, x):
         input_x = x
-        x = x.view(*(x.shape[:-2]),-1).mean(-1)
+        x = x.view(*(x.shape[:-2]), -1).mean(-1)
         x = F.relu(self.linear_1(x), inplace=True)
         x = self.linear_2(x)
         x = x.unsqueeze(-1).unsqueeze(-1)
         x = torch.sigmoid(x)
         x = input_x * x
         return x
+
 
 class SSE(nn.Module):
     def __init__(self, in_ch):
@@ -32,6 +63,7 @@ class SSE(nn.Module):
         x = torch.sigmoid(x)
         x = input_x * x
         return x
+
 
 class SCSE(nn.Module):
     def __init__(self, in_ch, r=8):
@@ -50,8 +82,8 @@ class SEBlock(nn.Module):
     def __init__(self, in_ch, r=8):
         super(SEBlock, self).__init__()
 
-        self.linear_1 = nn.Linear(in_ch, in_ch//r)
-        self.linear_2 = nn.Linear(in_ch//r, in_ch)
+        self.linear_1 = nn.Linear(in_ch, in_ch // r)
+        self.linear_2 = nn.Linear(in_ch // r, in_ch)
 
     def forward(self, x):
         input_x = x
@@ -61,26 +93,71 @@ class SEBlock(nn.Module):
         x = input_x * x
         return x
 
+
+class ChannelAttentionModule(nn.Module):
+    def __init__(self, in_channel, reduction):
+        super().__init__()
+        self.global_maxpool = nn.AdaptiveMaxPool2d(1)
+        self.global_avgpool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+            conv1x1(in_channel, in_channel // reduction).apply(init_weight),
+            nn.ReLU(True),
+            conv1x1(in_channel // reduction, in_channel).apply(init_weight)
+        )
+
+    def forward(self, inputs):
+        x1 = self.global_maxpool(inputs)
+        x2 = self.global_avgpool(inputs)
+        x1 = self.fc(x1)
+        x2 = self.fc(x2)
+        x = torch.sigmoid(x1 + x2)
+        return x
+
+
+class SpatialAttentionModule(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv3x3 = conv3x3(2, 1).apply(init_weight)
+
+    def forward(self, inputs):
+        x1, _ = torch.max(inputs, dim=1, keepdim=True)
+        x2 = torch.mean(inputs, dim=1, keepdim=True)
+        x = torch.cat([x1, x2], dim=1)
+        x = self.conv3x3(x)
+        x = torch.sigmoid(x)
+        return x
+
+
+class CBAM(nn.Module):
+    def __init__(self, in_channel, reduction):
+        super().__init__()
+        self.channel_attention = ChannelAttentionModule(in_channel, reduction)
+        self.spatial_attention = SpatialAttentionModule()
+
+    def forward(self, inputs):
+        x = inputs * self.channel_attention(inputs)
+        x = x * self.spatial_attention(x)
+        return x
+
+
 # TODO:
-# add GloRe(GCN attention) 
+# add GloRe(GCN attention)
 # https://github.com/facebookresearch/GloRe/blob/master/network/global_reasoning_unit.py
 # add CCAtention
 # https://github.com/speedinghzl/CCNet/blob/master/networks/ccnet.py#L99
 
-class Flatten(nn.Module):
-    def forward(self, input):
-        return input.view(input.size(0), -1)
 
 def gem(x, p=1, eps=1e-6):
-    return F.avg_pool2d(x.clamp(min=eps).pow(p), (x.size(-2), x.size(-1))).pow(1./p)
+    return F.avg_pool2d(x.clamp(min=eps).pow(p), (x.size(-2), x.size(-1))).pow(1. / p)
+
 
 class GeM(nn.Module):
     def __init__(self, p=3, flatten=True, eps=1e-6):
-        super(GeM,self).__init__()
-        self.p = Parameter(torch.ones(1)*p)
+        super(GeM, self).__init__()
+        self.p = Parameter(torch.ones(1) * p)
         self.eps = eps
         if flatten:
-            self.flatten = Flatten()
+            self.flatten = nn.Flatten()
         else:
             self.flatten = False
 
@@ -90,18 +167,20 @@ class GeM(nn.Module):
             return self.flatten(x)
         else:
             return x
-            
+
     def __repr__(self):
         return self.__class__.__name__ + '(' + 'p=' + '{:.4f}'.format(self.p.data.tolist()[0]) + ', ' + 'eps=' + str(self.eps) + ')'
 
+
 class GeM_cw(nn.Module):
     """ channel-wise GeM Pooling """
+
     def __init__(self, num_channel, p=1, flatten=True, eps=1e-6):
-        super(GeM_cw,self).__init__()
-        self.p = Parameter(torch.ones(num_channel)*p)
+        super(GeM_cw, self).__init__()
+        self.p = Parameter(torch.ones(num_channel) * p)
         self.eps = eps
         if flatten:
-            self.flatten = Flatten()
+            self.flatten = nn.Flatten()
         else:
             self.flatten = False
 
@@ -112,13 +191,13 @@ class GeM_cw(nn.Module):
             return self.flatten(x)
         else:
             return x
-            
+
     def __repr__(self):
         return self.__class__.__name__ + '(' + 'p=' + '{:.4f}'.format(self.p.data.tolist()[0]) + ', ' + 'eps=' + str(self.eps) + ')'
 
 
 class FastGlobalAvgPool2d(nn.Module):
-    def __init__(self, flatten=True): # flatten == True : pool + flatten
+    def __init__(self, flatten=True):  # flatten == True : pool + flatten
         super(FastGlobalAvgPool2d, self).__init__()
         self.flatten = flatten
 
@@ -131,7 +210,7 @@ class FastGlobalAvgPool2d(nn.Module):
 
 
 class FastGlobalConcatPool2d(nn.Module):
-    def __init__(self, flatten=True): # flatten == True : pool + flatten
+    def __init__(self, flatten=True):  # flatten == True : pool + flatten
         super(FastGlobalConcatPool2d, self).__init__()
         self.flatten = flatten
 
@@ -142,15 +221,16 @@ class FastGlobalConcatPool2d(nn.Module):
             return torch.cat([x.mean(dim=2), x.max(dim=2).values], 1)
         else:
             x = x.view(x.size(0), x.size(1), -1)
-            return torch.cat([x.mean(-1), x.max(-1).values], 1).view(x.size(0), 2*x.size(1), 1, 1)
+            return torch.cat([x.mean(-1), x.max(-1).values], 1).view(x.size(0), 2 * x.size(1), 1, 1)
+
 
 class MultiSampleDropoutFC(nn.Module):
-    def __init__(self, in_ch, out_ch, num_sample = 5, dropout = 0.5):
+    def __init__(self, in_ch, out_ch, num_sample=5, dropout=0.5):
         super(MultiSampleDropoutFC, self).__init__()
         self.dropouts = nn.ModuleList([nn.Dropout(dropout) for _ in range(num_sample)])
         self.fc = nn.Linear(in_ch, out_ch, bias=True)
 
-    def forward(self,x):
+    def forward(self, x):
         for i, dropout in enumerate(self.dropouts):
             if i == 0:
                 out = self.fc(dropout(x))
@@ -161,12 +241,13 @@ class MultiSampleDropoutFC(nn.Module):
 
 ###### activation ######
 
+
 class Mish(nn.Module):
     def __init__(self):
         super().__init__()
 
     def forward(self, x):
-        return x *( torch.tanh(F.softplus(x)))
+        return x * (torch.tanh(F.softplus(x)))
 
 
 class Swish(nn.Module):
@@ -180,17 +261,18 @@ class Swish(nn.Module):
             return x
         else:
             return x * torch.sigmoid(x)
-        
-        
+
+
 class FReLU(nn.Module):
     """
     FReLU formulation. The funnel condition has a window size of kxk. (k=3 by default)
     """
+
     def __init__(self, in_channels):
         super().__init__()
-        self.conv_frelu = nn.Conv2d(in_channels, in_channels, kernel_size = 3, stride = 1, padding = 1, groups = in_channels)
+        self.conv_frelu = nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1, groups=in_channels)
         self.bn_frelu = nn.BatchNorm2d(in_channels)
-        
+
     def forward(self, x):
         y = self.conv_frelu(x)
         y = self.bn_frelu(y)
@@ -198,12 +280,12 @@ class FReLU(nn.Module):
         return x
 
 
-###### example ###### 
+###### example ######
 
 def get_simple_fc(in_ch, num_classes, flatten=False):
     if flatten:
         return nn.Sequential(
-            Flatten(),
+            nn.Flatten(),
             nn.Linear(in_ch, 512),
             Swish(inplace=True),
             nn.Dropout(),
@@ -221,14 +303,14 @@ def get_simple_fc(in_ch, num_classes, flatten=False):
 def get_attention_fc(in_ch, num_classes, flatten=False):
     if flatten:
         return nn.Sequential(
-            Flatten(),
+            nn.Flatten(),
             SEBlock(in_ch),
-            MultiSampleDropoutFC(in_ch,num_classes),
+            MultiSampleDropoutFC(in_ch, num_classes),
         )
     else:
         return nn.Sequential(
             SEBlock(in_ch),
-            MultiSampleDropoutFC(in_ch,num_classes),
+            MultiSampleDropoutFC(in_ch, num_classes),
         )
 
 
@@ -242,7 +324,7 @@ def pixelshuffle(x, factor_hw):
     pW = factor_hw[1]
     y = x
     B, iC, iH, iW = y.shape
-    oC, oH, oW = iC//(pH*pW), iH*pH, iW*pW
+    oC, oH, oW = iC // (pH * pW), iH * pH, iW * pW
     y = y.reshape(B, oC, pH, pW, iH, iW)
     y = y.permute(0, 1, 4, 2, 5, 3)     # B, oC, iH, pH, iW, pW
     y = y.reshape(B, oC, oH, oW)
@@ -254,13 +336,14 @@ def pixelshuffle_invert(x, factor_hw):
     pW = factor_hw[1]
     y = x
     B, iC, iH, iW = y.shape
-    oC, oH, oW = iC*(pH*pW), iH//pH, iW//pW
+    oC, oH, oW = iC * (pH * pW), iH // pH, iW // pW
     y = y.reshape(B, iC, oH, pH, oW, pW)
     y = y.permute(0, 1, 3, 5, 2, 4)     # B, iC, pH, pW, oH, oW
     y = y.reshape(B, oC, oH, oW)
     return y
-    
-class SpaceToDepth(nn.Module): 
+
+
+class SpaceToDepth(nn.Module):
     def __init__(self, block_size=4):
         super().__init__()
         assert block_size == 4
@@ -321,6 +404,7 @@ class ArcMarginProduct(nn.Module):
             m: margin
             cos(theta + m)
         """
+
     def __init__(self, in_features, out_features, s=30.0, m=0.50, easy_margin=False):
         super(ArcMarginProduct, self).__init__()
         self.in_features = in_features
@@ -355,3 +439,53 @@ class ArcMarginProduct(nn.Module):
         # print(output)
 
         return output
+
+# ASPP
+
+
+class _ASPPModule(nn.Module):
+    def __init__(self, inplanes, planes, kernel_size, padding, dilation):
+        super(_ASPPModule, self).__init__()
+        self.atrous_conv = nn.Conv2d(inplanes, planes, kernel_size=kernel_size,
+                                     stride=1, padding=padding, dilation=dilation, bias=False)
+        self.bn = nn.BatchNorm2d(planes)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.atrous_conv(x)
+        x = self.bn(x)
+
+        return self.relu(x)
+
+
+class ASPP(nn.Module):
+    def __init__(self, inplanes=512, mid_c=256, dilations=[1, 6, 12, 18]):
+        super(ASPP, self).__init__()
+        self.aspp1 = _ASPPModule(inplanes, mid_c, 1, padding=0, dilation=dilations[0])
+        self.aspp2 = _ASPPModule(inplanes, mid_c, 3, padding=dilations[1], dilation=dilations[1])
+        self.aspp3 = _ASPPModule(inplanes, mid_c, 3, padding=dilations[2], dilation=dilations[2])
+        self.aspp4 = _ASPPModule(inplanes, mid_c, 3, padding=dilations[3], dilation=dilations[3])
+
+        self.global_avg_pool = nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                                             nn.Conv2d(inplanes, mid_c, 1, stride=1, bias=False),
+                                             nn.BatchNorm2d(mid_c),
+                                             nn.ReLU())
+        self.conv1 = nn.Conv2d(mid_c * 5, mid_c, 1, bias=False)
+        self.bn1 = nn.BatchNorm2d(mid_c)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, x):
+        x1 = self.aspp1(x)
+        x2 = self.aspp2(x)
+        x3 = self.aspp3(x)
+        x4 = self.aspp4(x)
+        x5 = self.global_avg_pool(x)
+        x5 = F.interpolate(x5, size=x4.size()[2:], mode='bilinear', align_corners=True)
+        x = torch.cat((x1, x2, x3, x4, x5), dim=1)
+
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+
+        return self.dropout(x)
