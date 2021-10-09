@@ -66,15 +66,15 @@ class SoftTargetCrossEntropy(nn.Module):
         return loss.mean()
 
 
-class KLDivLoss(nn.Module):
+class KLDivLosswSoftmax(nn.Module):
     """KL-divergence with softmax"""
 
     def __init__(self):
-        super(KLDivLoss, self).__init__()
+        super(KLDivLosswSoftmax, self).__init__()
         self.loss = nn.KLDivLoss()
 
     def forward(self, model_output, target):
-        log = F.log_softmax(model_output, dim=1)
+        log = F.log_softmax(model_output, dim=-1)
         loss = self.loss(log, target)
         return loss
 
