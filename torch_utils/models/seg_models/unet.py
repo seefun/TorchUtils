@@ -134,6 +134,7 @@ class UNet(nn.Module):
     def __init__(self,
                  backbone='resnest50d',
                  pretrained=True,
+                 in_channel=3,
                  neck='unet',  # unet or none
                  drop_first=True,
                  encoder_channels=[64, 256, 512, 1024, 2048],
@@ -147,7 +148,7 @@ class UNet(nn.Module):
                  deepsupervision=False,
                  clshead=False):
         super().__init__()
-        self.backbone = create_timm_model(backbone, pretrained)
+        self.backbone = create_timm_model(backbone, pretrained, in_channel=in_channel)
         self.attention = attention
         self.hypercolumns = hypercolumns
         self.out_channel = out_channel
@@ -264,10 +265,11 @@ class UNet(nn.Module):
         return logits
 
 
-def get_hrnet(name, out_channel, pretrained=True):
+def get_hrnet(name, out_channel, in_channel=3, pretrained=True):
     encoder_channels = get_encoder_info(name, False)
     model = UNet(backbone=name,
                  pretrained=pretrained,
+                 in_channel=in_channel,
                  neck=None,
                  encoder_channels=encoder_channels,
                  out_channel=out_channel,
@@ -275,10 +277,11 @@ def get_hrnet(name, out_channel, pretrained=True):
     return model
 
 
-def get_unet(name, out_channel, aspp=False, pretrained=True):
+def get_unet(name, out_channel, in_channel=3, aspp=False, pretrained=True):
     encoder_channels = get_encoder_info(name, False)
     model = UNet(backbone=name,
                  pretrained=pretrained,
+                 in_channel=in_channel,
                  neck='unet',
                  drop_first=True,
                  encoder_channels=encoder_channels,

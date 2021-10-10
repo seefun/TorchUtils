@@ -4,7 +4,7 @@ from torch_utils import criterion
 
 class TestBinaryLoss:
     y_pred = torch.tensor([0.88, -0.10, 0.55]).view(1, 1, 1, -1)
-    y_true = torch.tensor(([1, 0, 1])).view(1, 1, 1, -1)
+    y_true = torch.tensor(([1.0, 0.0, 1.0])).view(1, 1, 1, -1)
 
     def test_bitempered_loss(self):
         loss_fn = criterion.BiTemperedLogisticLoss()
