@@ -13,9 +13,10 @@ class ImageModel(nn.Module):
                  pooling='concat',
                  fc='multi-dropout',
                  num_feature=2048,
-                 classes=1):
+                 classes=1,
+                 in_channel=3):
         super(ImageModel, self).__init__()
-        self.model = create_timm_model(name, pretrained)
+        self.model = create_timm_model(name, pretrained, in_channel=in_channel)
 
         if pooling == 'concat':
             self.pooling = FastGlobalConcatPool2d()

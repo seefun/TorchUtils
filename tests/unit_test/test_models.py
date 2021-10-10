@@ -1,5 +1,6 @@
 import torch
 from torch_utils import models
+from torch_utils import advanced
 
 
 class TestModel:
@@ -28,4 +29,8 @@ class TestModel:
         model_conv(TestModel.inputs)
 
         model_conv = models.UNet(pretrained=False, neck=None, deepsupervision=True, clshead=True).eval()
+        model_conv(TestModel.inputs)
+
+    def test_DolgNet(self):
+        model_conv = advanced.DolgNet('resnet101', False, 224, 3, 512, 512).eval()
         model_conv(TestModel.inputs)

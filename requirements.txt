@@ -4,3 +4,4 @@ pytorch-metric-learning>=0.9.99
 torchinfo>=0.1.1
 torch-lr-finder>=0.2.1
 imagehash>=4.1.0
+thop>=0.0.31
