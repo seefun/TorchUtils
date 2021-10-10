@@ -1,4 +1,5 @@
 # modified from https://github.com/dongkyuk/DOLG-pytorch/blob/main/model/dolg.py
+# reference: https://arxiv.org/pdf/2108.02927.pdf
 
 import torch
 import torch.nn as nn

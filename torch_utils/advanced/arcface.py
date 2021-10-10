@@ -80,6 +80,7 @@ class DenseCrossEntropy(nn.Module):
 
 class ArcMarginProduct_subcenter(nn.Module):
     # https://github.com/haqishen/Google-Landmark-Recognition-2020-3rd-Place-Solution/blob/main/models.py
+    # https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123560715.pdf
     def __init__(self, in_features, out_features, k=3):
         super().__init__()
         self.weight = nn.Parameter(torch.FloatTensor(out_features * k, in_features))
@@ -99,7 +100,6 @@ class ArcMarginProduct_subcenter(nn.Module):
 
 
 class ArcFaceLossAdaptiveMargin(nn.Module):
-    # https://github.com/haqishen/Google-Landmark-Recognition-2020-3rd-Place-Solution/blob/main/models.py
     def __init__(self, margins, s=30.0):
         super().__init__()
         self.crit = DenseCrossEntropy()
