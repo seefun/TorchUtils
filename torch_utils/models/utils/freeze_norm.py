@@ -1,0 +1,11 @@
+def set_bn_eval(m):
+    classname = m.__class__.__name__
+    if classname.find('BatchNorm') != -1:
+        print(classname)
+        m.eval()
+
+def freeze_bn(model):
+    for m in model.named_modules():
+        set_bn_eval(m[1])
+        
+# usage: model.apply(freeze_bn) # this will freeze the bn in training process

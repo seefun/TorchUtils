@@ -24,7 +24,7 @@ except:
     print('[Warning] thop not installed')
 
 from . import layers
-from .utils.freeze_bn import set_bn_eval
+from .utils import *
 from .backbone import *
 from .cls_models import *
 from .seg_models import *
