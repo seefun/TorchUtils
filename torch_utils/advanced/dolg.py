@@ -21,7 +21,7 @@ class MultiAtrous(nn.Module):
             nn.AdaptiveAvgPool2d(1),
             nn.Conv2d(in_channel, int(out_channel / 4), kernel_size=1),
             nn.ReLU(),
-            nn.Upsample(size=(size, size), mode='bilinear')
+            nn.Upsample(size=(size, size), mode='bilinear', align_corners=False)
         )
         self.dilated_convs.append(self.gap_branch)
         self.dilated_convs = nn.ModuleList(self.dilated_convs)
