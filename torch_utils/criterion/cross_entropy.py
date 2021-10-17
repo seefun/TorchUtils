@@ -71,7 +71,7 @@ class KLDivLosswSoftmax(nn.Module):
 
     def __init__(self):
         super(KLDivLosswSoftmax, self).__init__()
-        self.loss = nn.KLDivLoss()
+        self.loss = nn.KLDivLoss(reduction='batchmean')
 
     def forward(self, model_output, target):
         log = F.log_softmax(model_output, dim=-1)

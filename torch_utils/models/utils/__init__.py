@@ -1,1 +1,1 @@
-from .freeze_bn import set_bn_eval
+from .freeze_norm import set_bn_eval, freeze_bn

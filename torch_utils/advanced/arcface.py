@@ -31,7 +31,7 @@ class ArcMarginProduct(nn.Module):
         self.weight.data.uniform_(-stdv, stdv)
 
     def forward(self, features):
-        cosine = F.linear(F.normalize(features), F.normalize(self.weight.cuda()))
+        cosine = F.linear(F.normalize(features), F.normalize(self.weight))
         return cosine
 
 
