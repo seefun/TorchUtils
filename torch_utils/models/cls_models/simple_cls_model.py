@@ -53,6 +53,7 @@ class ImageModel(nn.Module):
         logits = self.fc(embedding)
         return logits, embedding
 
+
 def get_encoder_last_channel(name='resnest50d', verbose=True):
     model = create_timm_model(name, pretrained=False).eval()
     features = model(torch.rand(1, 3, 224, 224))
@@ -60,6 +61,7 @@ def get_encoder_last_channel(name='resnest50d', verbose=True):
         for i, feat in enumerate(features):
             print('Feature [%d], channel num: %d' % (i, feat.shape[1]))
     return features[-1].shape[1]
+
 
 def get_conv_model(name='resnest50d',
                    pretrained=True,
