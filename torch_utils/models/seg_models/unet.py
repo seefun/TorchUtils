@@ -28,7 +28,7 @@ class DecodeBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(in_channel)
         self.upsample = nn.Sequential()
         if upsample:
-            self.upsample.add_module('upsample', nn.Upsample(scale_factor=2, mode='nearest'))
+            self.upsample.add_module('upsample', nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True))
         self.conv3x3_1 = conv3x3(in_channel, out_channel)
         self.bn2 = nn.BatchNorm2d(out_channel)
         self.conv3x3_2 = conv3x3(out_channel, out_channel)
@@ -103,12 +103,6 @@ class UNet_neck(nn.Module):
             self.decoder0 = DecodeBlock(
                 decoder_channels[3] + encoder_channels[0], decoder_channels[4], upsample=True,
                 attention=attention)  # ->(*,64,h,w)
-
-        # upsample
-        self.upsample4 = nn.Upsample(scale_factor=16, mode='bilinear', align_corners=True)
-        self.upsample3 = nn.Upsample(scale_factor=8, mode='bilinear', align_corners=True)
-        self.upsample2 = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=True)
-        self.upsample1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
     def forward(self, inputs):
         # encoder

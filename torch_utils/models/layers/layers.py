@@ -316,8 +316,9 @@ def get_attention_fc(in_ch, num_classes, flatten=False):
 
 #########################
 # DepthToSpace == pixel shuffle
-# SpaceToDepth == inverted pixel shuffle
 # Official: torch.nn.PixelShuffle(upscale_factor)
+# SpaceToDepth == inverted pixel shuffle
+# Official: torch.nn.PixelUnshuffle(downscale_factor)
 
 def pixelshuffle(x, factor_hw):
     pH = factor_hw[0]
