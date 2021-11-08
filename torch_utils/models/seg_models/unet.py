@@ -35,9 +35,10 @@ class CenterBlock(nn.Module):
 
 
 class DecodeBlock(nn.Module):
-    def __init__(self, in_channel, out_channel, upsample, attention=None):
+    def __init__(self, in_channel, out_channel, upsample, attention=None, dropout=0.125):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_channel)
+        self.dropout = nn.Dropout2d(dropout)
         self.upsample = nn.Sequential()
         if upsample:
             self.upsample.add_module('upsample', nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True))
@@ -53,7 +54,7 @@ class DecodeBlock(nn.Module):
         self.conv1x1 = conv1x1(in_channel, out_channel)
 
     def forward(self, inputs):
-        x = F.relu(self.bn1(inputs))
+        x = self.dropout(F.relu(self.bn1(inputs)))
         x = self.upsample(x)
         x = self.conv3x3_1(x)
         x = self.conv3x3_2(F.relu(self.bn2(x)))
@@ -86,7 +87,8 @@ class UNet_neck(nn.Module):
                  attention='cbam',
                  drop_first=True,
                  aspp=False,
-                 dilations=[1, 6, 12, 18]):
+                 dilations=[1, 6, 12, 18],
+                 dropout=0.125):
         super().__init__()
         self.drop_first = drop_first
 
@@ -100,24 +102,24 @@ class UNet_neck(nn.Module):
         # decoder
         self.decoder4 = DecodeBlock(
             center_channel + encoder_channels[4], decoder_channels[0],
-            upsample=True, attention=attention)  # ->(*,64,h/16,w/16)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/16,w/16)
         self.decoder3 = DecodeBlock(
             decoder_channels[0] + encoder_channels[3], decoder_channels[1],
-            upsample=True, attention=attention)  # ->(*,64,h/8,w/8)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/8,w/8)
         self.decoder2 = DecodeBlock(
             decoder_channels[1] + encoder_channels[2], decoder_channels[2],
-            upsample=True, attention=attention)  # ->(*,64,h/4,w/4)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/4,w/4)
         self.decoder1 = DecodeBlock(
             decoder_channels[2] + encoder_channels[1], decoder_channels[3],
-            upsample=True, attention=attention)  # ->(*,64,h/2,w/2)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/2,w/2)
         if drop_first:
             self.decoder0 = DecodeBlock(
                 decoder_channels[3], decoder_channels[4], upsample=True,
-                attention=attention)  # ->(*,64,h,w)
+                attention=attention, dropout=dropout)  # ->(*,64,h,w)
         else:
             self.decoder0 = DecodeBlock(
                 decoder_channels[3] + encoder_channels[0], decoder_channels[4], upsample=True,
-                attention=attention)  # ->(*,64,h,w)
+                attention=attention, dropout=dropout)  # ->(*,64,h,w)
 
     def forward(self, inputs):
         # encoder
@@ -152,7 +154,8 @@ class unet_ps_neck(nn.Module):
                  attention='cbam',
                  drop_first=True,
                  aspp=False,
-                 dilations=[1, 6, 12, 18]):
+                 dilations=[1, 6, 12, 18],
+                 dropout=0.125):
         super().__init__()
         self.drop_first = drop_first
 
@@ -171,24 +174,24 @@ class unet_ps_neck(nn.Module):
         # decoder
         self.decoder4 = DecodeBlock(
             center_channel, decoder_channels[0],
-            upsample=True, attention=attention)  # ->(*,64,h/16,w/16)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/16,w/16)
         self.decoder3 = DecodeBlock(
             decoder_channels[0] + encoder_channels[4] // 4, decoder_channels[1],
-            upsample=True, attention=attention)  # ->(*,64,h/8,w/8)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/8,w/8)
         self.decoder2 = DecodeBlock(
             decoder_channels[1] + encoder_channels[3] // 4, decoder_channels[2],
-            upsample=True, attention=attention)  # ->(*,64,h/4,w/4)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/4,w/4)
         self.decoder1 = DecodeBlock(
             decoder_channels[2] + encoder_channels[2] // 4, decoder_channels[3],
-            upsample=True, attention=attention)  # ->(*,64,h/2,w/2)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/2,w/2)
         if self.drop_first:
             self.decoder0 = DecodeBlock(
                 decoder_channels[3] + encoder_channels[1] // 4, decoder_channels[4],
-                upsample=True, attention=attention)  # ->(*,64,h,w)
+                upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h,w)
         else:
             self.decoder0 = DecodeBlock(
                 decoder_channels[3] + encoder_channels[1] // 4 + encoder_channels[0], decoder_channels[4],
-                upsample=True, attention=attention)  # ->(*,64,h,w)
+                upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h,w)
 
     def forward(self, inputs):
         # encoder
@@ -225,6 +228,7 @@ class UNet(nn.Module):
                  encoder_channels=[64, 256, 512, 1024, 2048],
                  center_channel=512,
                  decoder_channels=[64, 64, 64, 64, 64],
+                 dropout=0.125,
                  out_channel=1,
                  attention='cbam',
                  aspp=False,
@@ -245,15 +249,17 @@ class UNet(nn.Module):
                                   attention=attention,
                                   drop_first=drop_first,
                                   aspp=aspp,
-                                  dilations=dilations)
+                                  dilations=dilations,
+                                  dropout=dropout)
         elif neck == 'unet_ps':
             self.neck = unet_ps_neck(encoder_channels=encoder_channels,
-                                       center_channel=center_channel,
-                                       decoder_channels=decoder_channels,
-                                       attention=attention,
-                                       drop_first=drop_first,
-                                       aspp=aspp,
-                                       dilations=dilations)
+                                     center_channel=center_channel,
+                                     decoder_channels=decoder_channels,
+                                     attention=attention,
+                                     drop_first=drop_first,
+                                     aspp=aspp,
+                                     dilations=dilations,
+                                     dropout=dropout)
         else:
             self.neck = None
 
@@ -266,6 +272,7 @@ class UNet(nn.Module):
 
             self.head = nn.Sequential(
                 conv3x3(final_channel, decoder_channels[4]),
+                nn.BatchNorm2d(decoder_channels[4]),
                 nn.SiLU(True),
                 conv1x1(decoder_channels[4], self.out_channel)
             )
@@ -277,6 +284,7 @@ class UNet(nn.Module):
 
             self.head = nn.Sequential(
                 conv1x1(final_channel, self.out_channel * 4),
+                nn.BatchNorm2d(self.out_channel * 4),
                 nn.SiLU(True),
                 conv3x3(self.out_channel * 4, self.out_channel)
             )
@@ -380,6 +388,7 @@ def get_unet(name, out_channel, in_channel=3, attention='cbam', aspp=False, pret
                  encoder_channels=encoder_channels,
                  center_channel=512,
                  decoder_channels=[64, 64, 64, 64, 64],
+                 dropout=0.125,
                  out_channel=out_channel,
                  attention=attention,
                  aspp=aspp,
@@ -399,6 +408,7 @@ def get_unet_ps(name, out_channel, in_channel=3, attention='cbam', aspp=False, p
                  encoder_channels=encoder_channels,
                  center_channel=512,
                  decoder_channels=[128, 128, 128, 64, 64],
+                 dropout=0.125,
                  out_channel=out_channel,
                  attention=attention,
                  aspp=aspp,
