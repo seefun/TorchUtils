@@ -150,7 +150,7 @@ class unet_ps_neck(nn.Module):
     def __init__(self,
                  encoder_channels=[64, 256, 512, 1024, 2048],
                  center_channel=512,
-                 decoder_channels=[128, 128, 128, 64, 64],
+                 decoder_channels=[128, 128, 64, 64, 64],
                  attention='cbam',
                  drop_first=True,
                  aspp=False,
@@ -166,31 +166,31 @@ class unet_ps_neck(nn.Module):
             aspp=aspp,
             dilations=dilations)  # ->(*,512,h/32,w/32)
 
-        self.ps4 = PixelShuffleUpSample(encoder_channels[4], encoder_channels[4] // 4)
-        self.ps3 = PixelShuffleUpSample(encoder_channels[3], encoder_channels[3] // 4)
-        self.ps2 = PixelShuffleUpSample(encoder_channels[2], encoder_channels[2] // 4)
-        self.ps1 = PixelShuffleUpSample(encoder_channels[1], encoder_channels[1] // 4)
+        self.ps4 = PixelShuffleUpSample(encoder_channels[4], decoder_channels[0])
+        self.ps3 = PixelShuffleUpSample(encoder_channels[3], decoder_channels[1])
+        self.ps2 = PixelShuffleUpSample(encoder_channels[2], decoder_channels[2])
+        self.ps1 = PixelShuffleUpSample(encoder_channels[1], decoder_channels[3])
 
         # decoder
         self.decoder4 = DecodeBlock(
             center_channel, decoder_channels[0],
             upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/16,w/16)
         self.decoder3 = DecodeBlock(
-            decoder_channels[0] + encoder_channels[4] // 4, decoder_channels[1],
+            decoder_channels[0] * 2, decoder_channels[1],
             upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/8,w/8)
         self.decoder2 = DecodeBlock(
-            decoder_channels[1] + encoder_channels[3] // 4, decoder_channels[2],
+            decoder_channels[1] * 2, decoder_channels[2],
             upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/4,w/4)
         self.decoder1 = DecodeBlock(
-            decoder_channels[2] + encoder_channels[2] // 4, decoder_channels[3],
+            decoder_channels[2] * 2, decoder_channels[3],
             upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/2,w/2)
         if self.drop_first:
             self.decoder0 = DecodeBlock(
-                decoder_channels[3] + encoder_channels[1] // 4, decoder_channels[4],
+                decoder_channels[3] * 2, decoder_channels[4],
                 upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h,w)
         else:
             self.decoder0 = DecodeBlock(
-                decoder_channels[3] + encoder_channels[1] // 4 + encoder_channels[0], decoder_channels[4],
+                decoder_channels[3] * 2 + encoder_channels[0], decoder_channels[4],
                 upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h,w)
 
     def forward(self, inputs):
@@ -388,7 +388,7 @@ def get_unet(name, out_channel, in_channel=3, attention='cbam', aspp=False, pret
                  encoder_channels=encoder_channels,
                  center_channel=512,
                  decoder_channels=[64, 64, 64, 64, 64],
-                 dropout=0.125,
+                 dropout=0.0,
                  out_channel=out_channel,
                  attention=attention,
                  aspp=aspp,
@@ -398,16 +398,16 @@ def get_unet(name, out_channel, in_channel=3, attention='cbam', aspp=False, pret
     return model
 
 
-def get_unet_ps(name, out_channel, in_channel=3, attention='cbam', aspp=False, pretrained=True):
+def get_unet_ps(name, out_channel, in_channel=3, attention='scse', aspp=False, pretrained=True):
     encoder_channels = get_encoder_info(name, False)
     model = UNet(backbone=name,
                  pretrained=pretrained,
                  in_channel=in_channel,
                  neck='unet_ps',
-                 drop_first=True,
+                 drop_first=False,
                  encoder_channels=encoder_channels,
-                 center_channel=512,
-                 decoder_channels=[128, 128, 128, 64, 64],
+                 center_channel=320,
+                 decoder_channels=[128, 128, 64, 64, 64],
                  dropout=0.125,
                  out_channel=out_channel,
                  attention=attention,
