@@ -172,3 +172,4 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 - [ ] add Hybrid Vision Transformer
 - [ ] channels_last
 - [ ] inplace_abn
+- [ ] grad-CAM
