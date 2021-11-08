@@ -7,6 +7,18 @@ from torch_utils.models.layers import conv1x1, conv3x3, SCSE, CBAM, ASPP, FastGl
 from torch_utils.models import create_timm_model
 
 
+class PixelShuffleUpSample(nn.Module):
+    def __init__(self, in_channel, out_channel, scale_factor=2):
+        super().__init__()
+        self.conv = conv3x3(in_channel, out_channel * scale_factor * scale_factor)
+        self.ps = nn.PixelShuffle(upscale_factor=scale_factor)
+
+    def forward(self, feature):
+        feature = self.conv(feature)
+        feature = self.ps(feature)
+        return feature
+
+
 class CenterBlock(nn.Module):
     def __init__(self, in_channel, out_channel, aspp=False, dilations=[1, 6, 12, 18]):
         super().__init__()
@@ -23,12 +35,13 @@ class CenterBlock(nn.Module):
 
 
 class DecodeBlock(nn.Module):
-    def __init__(self, in_channel, out_channel, upsample, attention=None):
+    def __init__(self, in_channel, out_channel, upsample, attention=None, dropout=0.125):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_channel)
+        self.dropout = nn.Dropout2d(dropout)
         self.upsample = nn.Sequential()
         if upsample:
-            self.upsample.add_module('upsample', nn.Upsample(scale_factor=2, mode='nearest'))
+            self.upsample.add_module('upsample', nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True))
         self.conv3x3_1 = conv3x3(in_channel, out_channel)
         self.bn2 = nn.BatchNorm2d(out_channel)
         self.conv3x3_2 = conv3x3(out_channel, out_channel)
@@ -41,7 +54,7 @@ class DecodeBlock(nn.Module):
         self.conv1x1 = conv1x1(in_channel, out_channel)
 
     def forward(self, inputs):
-        x = F.relu(self.bn1(inputs))
+        x = self.dropout(F.relu(self.bn1(inputs)))
         x = self.upsample(x)
         x = self.conv3x3_1(x)
         x = self.conv3x3_2(F.relu(self.bn2(x)))
@@ -62,7 +75,10 @@ def get_encoder_info(name='resnest50d', verbose=True):
 
 
 class UNet_neck(nn.Module):
-    '''Input feature list and output feature list'''
+    '''
+    UNet neck
+    Input feature list and output feature list
+    '''
 
     def __init__(self,
                  encoder_channels=[64, 256, 512, 1024, 2048],
@@ -71,7 +87,8 @@ class UNet_neck(nn.Module):
                  attention='cbam',
                  drop_first=True,
                  aspp=False,
-                 dilations=[1, 6, 12, 18]):
+                 dilations=[1, 6, 12, 18],
+                 dropout=0.125):
         super().__init__()
         self.drop_first = drop_first
 
@@ -85,37 +102,31 @@ class UNet_neck(nn.Module):
         # decoder
         self.decoder4 = DecodeBlock(
             center_channel + encoder_channels[4], decoder_channels[0],
-            upsample=True, attention=attention)  # ->(*,64,h/16,w/16)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/16,w/16)
         self.decoder3 = DecodeBlock(
             decoder_channels[0] + encoder_channels[3], decoder_channels[1],
-            upsample=True, attention=attention)  # ->(*,64,h/8,w/8)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/8,w/8)
         self.decoder2 = DecodeBlock(
             decoder_channels[1] + encoder_channels[2], decoder_channels[2],
-            upsample=True, attention=attention)  # ->(*,64,h/4,w/4)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/4,w/4)
         self.decoder1 = DecodeBlock(
             decoder_channels[2] + encoder_channels[1], decoder_channels[3],
-            upsample=True, attention=attention)  # ->(*,64,h/2,w/2)
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/2,w/2)
         if drop_first:
             self.decoder0 = DecodeBlock(
                 decoder_channels[3], decoder_channels[4], upsample=True,
-                attention=attention)  # ->(*,64,h,w)
+                attention=attention, dropout=dropout)  # ->(*,64,h,w)
         else:
             self.decoder0 = DecodeBlock(
                 decoder_channels[3] + encoder_channels[0], decoder_channels[4], upsample=True,
-                attention=attention)  # ->(*,64,h,w)
-
-        # upsample
-        self.upsample4 = nn.Upsample(scale_factor=16, mode='bilinear', align_corners=True)
-        self.upsample3 = nn.Upsample(scale_factor=8, mode='bilinear', align_corners=True)
-        self.upsample2 = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=True)
-        self.upsample1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+                attention=attention, dropout=dropout)  # ->(*,64,h,w)
 
     def forward(self, inputs):
         # encoder
         x0, x1, x2, x3, x4 = inputs
 
         # center
-        y5 = self.center(x4)  # ->(*,320,h/32,w/32)
+        y5 = self.center(x4)  # ->(*,512,h/32,w/32)
 
         # decoder
         y4 = self.decoder4(torch.cat([x4, y5], dim=1))  # ->(*,64,h/16,w/16)
@@ -125,7 +136,84 @@ class UNet_neck(nn.Module):
         if self.drop_first:
             y0 = self.decoder0(y1)  # ->(*,64,h,w)
         else:
-            y0 = self.decoder0(torch.cat([x0, y1]))  # ->(*,64,h,w)
+            y0 = self.decoder0(torch.cat([x0, y1], dim=1))  # ->(*,64,h,w)
+
+        return [y4, y3, y2, y1, y0]
+
+
+class unet_ps_neck(nn.Module):
+    '''
+    UNet with pixelshuffle neck
+    Input feature list and output feature list
+    '''
+
+    def __init__(self,
+                 encoder_channels=[64, 256, 512, 1024, 2048],
+                 center_channel=512,
+                 decoder_channels=[128, 128, 64, 64, 64],
+                 attention='cbam',
+                 drop_first=True,
+                 aspp=False,
+                 dilations=[1, 6, 12, 18],
+                 dropout=0.125):
+        super().__init__()
+        self.drop_first = drop_first
+
+        # center
+        self.center = CenterBlock(
+            encoder_channels[-1],
+            center_channel,
+            aspp=aspp,
+            dilations=dilations)  # ->(*,512,h/32,w/32)
+
+        self.ps4 = PixelShuffleUpSample(encoder_channels[4], decoder_channels[0])
+        self.ps3 = PixelShuffleUpSample(encoder_channels[3], decoder_channels[1])
+        self.ps2 = PixelShuffleUpSample(encoder_channels[2], decoder_channels[2])
+        self.ps1 = PixelShuffleUpSample(encoder_channels[1], decoder_channels[3])
+
+        # decoder
+        self.decoder4 = DecodeBlock(
+            center_channel, decoder_channels[0],
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/16,w/16)
+        self.decoder3 = DecodeBlock(
+            decoder_channels[0] * 2, decoder_channels[1],
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/8,w/8)
+        self.decoder2 = DecodeBlock(
+            decoder_channels[1] * 2, decoder_channels[2],
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/4,w/4)
+        self.decoder1 = DecodeBlock(
+            decoder_channels[2] * 2, decoder_channels[3],
+            upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h/2,w/2)
+        if self.drop_first:
+            self.decoder0 = DecodeBlock(
+                decoder_channels[3] * 2, decoder_channels[4],
+                upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h,w)
+        else:
+            self.decoder0 = DecodeBlock(
+                decoder_channels[3] * 2 + encoder_channels[0], decoder_channels[4],
+                upsample=True, attention=attention, dropout=dropout)  # ->(*,64,h,w)
+
+    def forward(self, inputs):
+        # encoder
+        x0, x1, x2, x3, x4 = inputs
+
+        # center
+        y5 = self.center(x4)  # ->(*,512,h/32,w/32)
+
+        x4 = self.ps4(x4)
+        x3 = self.ps3(x3)
+        x2 = self.ps2(x2)
+        x1 = self.ps1(x1)
+
+        # decoder
+        y4 = self.decoder4(y5)  # ->(*,64,h/16,w/16)
+        y3 = self.decoder3(torch.cat([x4, y4], dim=1))  # ->(*,64,h/8,w/8)
+        y2 = self.decoder2(torch.cat([x3, y3], dim=1))  # ->(*,64,h/4,w/4)
+        y1 = self.decoder1(torch.cat([x2, y2], dim=1))  # ->(*,64,h/2,w/2)
+        if self.drop_first:
+            y0 = self.decoder0(torch.cat([x1, y1], dim=1))  # ->(*,64,h,w)
+        else:
+            y0 = self.decoder0(torch.cat([x0, x1, y1], dim=1))  # ->(*,64,h,w)
 
         return [y4, y3, y2, y1, y0]
 
@@ -140,6 +228,7 @@ class UNet(nn.Module):
                  encoder_channels=[64, 256, 512, 1024, 2048],
                  center_channel=512,
                  decoder_channels=[64, 64, 64, 64, 64],
+                 dropout=0.125,
                  out_channel=1,
                  attention='cbam',
                  aspp=False,
@@ -160,7 +249,17 @@ class UNet(nn.Module):
                                   attention=attention,
                                   drop_first=drop_first,
                                   aspp=aspp,
-                                  dilations=dilations)
+                                  dilations=dilations,
+                                  dropout=dropout)
+        elif neck == 'unet_ps':
+            self.neck = unet_ps_neck(encoder_channels=encoder_channels,
+                                     center_channel=center_channel,
+                                     decoder_channels=decoder_channels,
+                                     attention=attention,
+                                     drop_first=drop_first,
+                                     aspp=aspp,
+                                     dilations=dilations,
+                                     dropout=dropout)
         else:
             self.neck = None
 
@@ -173,6 +272,7 @@ class UNet(nn.Module):
 
             self.head = nn.Sequential(
                 conv3x3(final_channel, decoder_channels[4]),
+                nn.BatchNorm2d(decoder_channels[4]),
                 nn.SiLU(True),
                 conv1x1(decoder_channels[4], self.out_channel)
             )
@@ -184,6 +284,7 @@ class UNet(nn.Module):
 
             self.head = nn.Sequential(
                 conv1x1(final_channel, self.out_channel * 4),
+                nn.BatchNorm2d(self.out_channel * 4),
                 nn.SiLU(True),
                 conv3x3(self.out_channel * 4, self.out_channel)
             )
@@ -277,7 +378,7 @@ def get_hrnet(name, out_channel, in_channel=3, pretrained=True):
     return model
 
 
-def get_unet(name, out_channel, in_channel=3, aspp=False, pretrained=True):
+def get_unet(name, out_channel, in_channel=3, attention='cbam', aspp=False, pretrained=True):
     encoder_channels = get_encoder_info(name, False)
     model = UNet(backbone=name,
                  pretrained=pretrained,
@@ -287,8 +388,29 @@ def get_unet(name, out_channel, in_channel=3, aspp=False, pretrained=True):
                  encoder_channels=encoder_channels,
                  center_channel=512,
                  decoder_channels=[64, 64, 64, 64, 64],
+                 dropout=0.0,
                  out_channel=out_channel,
-                 attention='cbam',
+                 attention=attention,
+                 aspp=aspp,
+                 hypercolumns=True,
+                 deepsupervision=False,
+                 clshead=False)
+    return model
+
+
+def get_unet_ps(name, out_channel, in_channel=3, attention='scse', aspp=False, pretrained=True):
+    encoder_channels = get_encoder_info(name, False)
+    model = UNet(backbone=name,
+                 pretrained=pretrained,
+                 in_channel=in_channel,
+                 neck='unet_ps',
+                 drop_first=False,
+                 encoder_channels=encoder_channels,
+                 center_channel=320,
+                 decoder_channels=[128, 128, 64, 64, 64],
+                 dropout=0.125,
+                 out_channel=out_channel,
+                 attention=attention,
                  aspp=aspp,
                  hypercolumns=True,
                  deepsupervision=False,

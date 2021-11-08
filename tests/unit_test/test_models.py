@@ -4,7 +4,7 @@ from torch_utils import advanced
 
 
 class TestModel:
-    inputs = torch.rand(2, 3, 224, 224)
+    inputs = torch.rand(1, 3, 224, 224)
 
     def test_cls_model(self):
         pooling = ['gem', 'concat', 'avg']
@@ -22,6 +22,10 @@ class TestModel:
         model_conv(TestModel.inputs)
 
         model_conv = models.UNet(pretrained=False, aspp=True, deepsupervision=True, clshead=True).eval()
+        model_conv(TestModel.inputs)
+
+    def test_unet_ps(self):
+        model_conv = models.UNet(pretrained=False, neck='unet_ps', aspp=True, deepsupervision=True, clshead=True).eval()
         model_conv(TestModel.inputs)
 
     def test_hrnet(self):

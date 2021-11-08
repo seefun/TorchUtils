@@ -316,8 +316,9 @@ def get_attention_fc(in_ch, num_classes, flatten=False):
 
 #########################
 # DepthToSpace == pixel shuffle
-# SpaceToDepth == inverted pixel shuffle
 # Official: torch.nn.PixelShuffle(upscale_factor)
+# SpaceToDepth == inverted pixel shuffle
+# Official: torch.nn.PixelUnshuffle(downscale_factor)
 
 def pixelshuffle(x, factor_hw):
     pH = factor_hw[0]
@@ -424,9 +425,6 @@ class ASPP(nn.Module):
                                              nn.BatchNorm2d(mid_c),
                                              nn.ReLU())
         self.conv1 = nn.Conv2d(mid_c * 5, mid_c, 1, bias=False)
-        self.bn1 = nn.BatchNorm2d(mid_c)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.5)
 
     def forward(self, x):
         x1 = self.aspp1(x)
@@ -438,7 +436,5 @@ class ASPP(nn.Module):
         x = torch.cat((x1, x2, x3, x4, x5), dim=1)
 
         x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
 
-        return self.dropout(x)
+        return x
