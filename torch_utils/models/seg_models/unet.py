@@ -3,7 +3,8 @@ from torch import nn
 from torch.nn import functional as F
 from torch.cuda.amp import autocast
 
-from torch_utils.models.layers import conv1x1, conv3x3, SCSE, CBAM, ASPP, FastGlobalConcatPool2d, get_simple_fc
+from torch_utils.models.layers import conv1x1, conv3x3, SCSE, CBAM, CoordAttention, \
+    ASPP, FastGlobalConcatPool2d, get_simple_fc
 from torch_utils.models import create_timm_model
 
 
@@ -46,9 +47,11 @@ class DecodeBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channel)
         self.conv3x3_2 = conv3x3(out_channel, out_channel)
         if attention == 'scse':
-            self.attention = SCSE(out_channel, r=8)
+            self.attention = SCSE(out_channel, r=16)
         elif attention == 'cbam':
             self.attention = CBAM(out_channel, reduction=16)
+        elif attention == 'coord':
+            self.attention = CoordAttention(out_channel, out_channel, reduction=16)
         else:
             self.attention = nn.Identity()
         self.conv1x1 = conv1x1(in_channel, out_channel)

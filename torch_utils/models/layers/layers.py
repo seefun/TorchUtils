@@ -95,7 +95,7 @@ class SEBlock(nn.Module):
 
 
 class ChannelAttentionModule(nn.Module):
-    def __init__(self, in_channel, reduction):
+    def __init__(self, in_channel, reduction=16):
         super().__init__()
         self.global_maxpool = nn.AdaptiveMaxPool2d(1)
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
@@ -129,7 +129,7 @@ class SpatialAttentionModule(nn.Module):
 
 
 class CBAM(nn.Module):
-    def __init__(self, in_channel, reduction):
+    def __init__(self, in_channel, reduction=16):
         super().__init__()
         self.channel_attention = ChannelAttentionModule(in_channel, reduction)
         self.spatial_attention = SpatialAttentionModule()
@@ -138,6 +138,32 @@ class CBAM(nn.Module):
         x = inputs * self.channel_attention(inputs)
         x = x * self.spatial_attention(x)
         return x
+
+
+class CoordAttention(nn.Module):
+    def __init__(self, in_channels, out_channels, reduction=16):
+        super(CoordAttention, self).__init__()
+        self.pool_w, self.pool_h = nn.AdaptiveAvgPool2d((1, None)), nn.AdaptiveAvgPool2d((None, 1))
+        temp_c = max(8, in_channels // reduction)
+        self.conv1 = nn.Conv2d(in_channels, temp_c, kernel_size=1, stride=1, padding=0)
+
+        self.bn1 = nn.BatchNorm2d(temp_c)
+        self.act1 = nn.SiLU(True)
+
+        self.conv2 = nn.Conv2d(temp_c, out_channels, kernel_size=1, stride=1, padding=0)
+        self.conv3 = nn.Conv2d(temp_c, out_channels, kernel_size=1, stride=1, padding=0)
+
+    def forward(self, x):
+        short = x
+        n, c, H, W = x.shape
+        x_h, x_w = self.pool_h(x), self.pool_w(x).permute(0, 1, 3, 2)
+        x_cat = torch.cat([x_h, x_w], dim=2)
+        out = self.act1(self.bn1(self.conv1(x_cat)))
+        x_h, x_w = torch.split(out, [H, W], dim=2)
+        x_w = x_w.permute(0, 1, 3, 2)
+        out_h = torch.sigmoid(self.conv2(x_h))
+        out_w = torch.sigmoid(self.conv3(x_w))
+        return short * out_w * out_h
 
 
 # TODO:
