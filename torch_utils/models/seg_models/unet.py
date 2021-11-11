@@ -36,13 +36,17 @@ class CenterBlock(nn.Module):
 
 
 class DecodeBlock(nn.Module):
-    def __init__(self, in_channel, out_channel, upsample, attention=None, dropout=0.125):
+    def __init__(self, in_channel, out_channel, upsample, attention=None, dropout=0.125, upsample_shape=None):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_channel)
         self.dropout = nn.Dropout2d(dropout)
         self.upsample = nn.Sequential()
+        self._upsample_shape = upsample_shape
         if upsample:
-            self.upsample.add_module('upsample', nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True))
+            if self._upsample_shape:
+                self.upsample.add_module('upsample', nn.Upsample(size=self._upsample_shape, mode='bilinear', align_corners=True))
+            else:
+                self.upsample.add_module('upsample', nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True))
         self.conv3x3_1 = conv3x3(in_channel, out_channel)
         self.bn2 = nn.BatchNorm2d(out_channel)
         self.conv3x3_2 = conv3x3(out_channel, out_channel)
@@ -55,6 +59,15 @@ class DecodeBlock(nn.Module):
         else:
             self.attention = nn.Identity()
         self.conv1x1 = conv1x1(in_channel, out_channel)
+    
+    @property
+    def upsample_shape(self):
+        return self._upsample_shape
+
+    @upsample_shape.setter
+    def upsample_shape(self, value):
+        self._upsample_shape = value
+        self.upsample.upsample = nn.Upsample(size=self._upsample_shape, mode='bilinear', align_corners=True)
 
     def forward(self, inputs):
         x = self.dropout(F.relu(self.bn1(inputs)))
@@ -132,6 +145,14 @@ class UNet_neck(nn.Module):
         y5 = self.center(x4)  # ->(*,512,h/32,w/32)
 
         # decoder
+        h = x0.shape[2] // 2 * 4 + x0.shape[2] % 2
+        w = x0.shape[3] // 2 * 4 + x0.shape[3] % 2
+        self.decoder0.upsample_shape = (h, w)
+        self.decoder1.upsample_shape = (x0.shape[2], x0.shape[3])
+        self.decoder2.upsample_shape = (x1.shape[2], x1.shape[3])
+        self.decoder3.upsample_shape = (x2.shape[2], x2.shape[3])
+        self.decoder4.upsample_shape = (x3.shape[2], x3.shape[3])
+
         y4 = self.decoder4(torch.cat([x4, y5], dim=1))  # ->(*,64,h/16,w/16)
         y3 = self.decoder3(torch.cat([x3, y4], dim=1))  # ->(*,64,h/8,w/8)
         y2 = self.decoder2(torch.cat([x2, y3], dim=1))  # ->(*,64,h/4,w/4)
@@ -230,7 +251,7 @@ class UNet(nn.Module):
                  drop_first=True,
                  encoder_channels=[64, 256, 512, 1024, 2048],
                  center_channel=512,
-                 decoder_channels=[64, 64, 64, 64, 64],
+                 decoder_channels=[256, 128, 64, 32, 16],
                  dropout=0.125,
                  out_channel=1,
                  attention='cbam',
@@ -292,25 +313,19 @@ class UNet(nn.Module):
                 conv3x3(self.out_channel * 4, self.out_channel)
             )
 
-        # upsample
-        self.upsample4 = nn.Upsample(scale_factor=16, mode='bilinear', align_corners=True)
-        self.upsample3 = nn.Upsample(scale_factor=8, mode='bilinear', align_corners=True)
-        self.upsample2 = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=True)
-        self.upsample1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-
         # deepsupervision
         self.deepsupervision = deepsupervision
         if self.deepsupervision:
             if neck:
-                self.deep4 = conv1x1(decoder_channels[0], 1)
-                self.deep3 = conv1x1(decoder_channels[1], 1)
-                self.deep2 = conv1x1(decoder_channels[2], 1)
-                self.deep1 = conv1x1(decoder_channels[3], 1)
+                self.deep4 = conv1x1(decoder_channels[0], self.out_channel)
+                self.deep3 = conv1x1(decoder_channels[1], self.out_channel)
+                self.deep2 = conv1x1(decoder_channels[2], self.out_channel)
+                self.deep1 = conv1x1(decoder_channels[3], self.out_channel)
             else:
-                self.deep4 = conv1x1(encoder_channels[-1], 1)
-                self.deep3 = conv1x1(encoder_channels[-2], 1)
-                self.deep2 = conv1x1(encoder_channels[-3], 1)
-                self.deep1 = conv1x1(encoder_channels[-4], 1)
+                self.deep4 = conv1x1(encoder_channels[-1], self.out_channel)
+                self.deep3 = conv1x1(encoder_channels[-2], self.out_channel)
+                self.deep2 = conv1x1(encoder_channels[-3], self.out_channel)
+                self.deep1 = conv1x1(encoder_channels[-4], self.out_channel)
 
         # classification head
         self.clshead = clshead
@@ -322,6 +337,8 @@ class UNet(nn.Module):
 
     @ autocast()
     def forward(self, inputs):
+        # shape
+        h, w = inputs.shape[2], inputs.shape[3]
         # encoder
         y0, y1, y2, y3, y4 = self.backbone(inputs)
         # cls head
@@ -330,24 +347,28 @@ class UNet(nn.Module):
 
         if self.neck:
             y4, y3, y2, y1, y0 = self.neck([y0, y1, y2, y3, y4])
-        else:
-            y4 = self.upsample1(y4)  # ->(*,64,h//16,w//16)
-            y3 = self.upsample1(y3)  # ->(*,64,h//8,w//8)
-            y2 = self.upsample1(y2)  # ->(*,64,h//4,w//4)
-            y1 = self.upsample1(y1)  # ->(*,64,h//2,w//2)
-            y0 = self.upsample1(y0)  # ->(*,64,h,w)
+
+        y0 = F.interpolate(y0, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+        all_upsample_to_original = False
 
         if self.hypercolumns:
             # hypercolumns
-            y4 = self.upsample4(y4)  # ->(*,64,h,w)
-            y3 = self.upsample3(y3)  # ->(*,64,h,w)
-            y2 = self.upsample2(y2)  # ->(*,64,h,w)
-            y1 = self.upsample1(y1)  # ->(*,64,h,w)
+            y4 = F.interpolate(y4, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+            y3 = F.interpolate(y3, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+            y2 = F.interpolate(y2, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+            y1 = F.interpolate(y1, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+            all_upsample_to_original = True
             hypercol = torch.cat([y0, y1, y2, y3, y4], dim=1)
         else:
             hypercol = y0
 
         if self.deepsupervision:
+            if not all_upsample_to_original:
+                y4 = F.interpolate(y4, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+                y3 = F.interpolate(y3, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+                y2 = F.interpolate(y2, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+                y1 = F.interpolate(y1, size=(h, w), mode='bilinear', align_corners=True)  # ->(*,64,h,w)
+                all_upsample_to_original = True
             s4 = self.deep4(y4)
             s3 = self.deep3(y3)
             s2 = self.deep2(y2)
