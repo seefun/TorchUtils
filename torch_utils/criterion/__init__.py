@@ -9,4 +9,5 @@ from .metric_loss import MoCo, SupConLoss_MoCo
 
 from .lovasz import BinaryLovaszLoss, LovaszLoss
 from .focal import BinaryFocalLoss, FocalLoss
-from .bitempered_loss import BiTemperedLogisticLoss
+from .bitempered_loss import BiTemperedLogisticLoss, BinaryBiTemperedLogisticLoss
+from .dice import DiceLoss
