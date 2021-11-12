@@ -141,6 +141,8 @@ class CBAM(nn.Module):
 
 
 class CoordAttention(nn.Module):
+    '''Coordinate Attention for Efficient Mobile Network Design'''
+
     def __init__(self, in_channels, out_channels, reduction=16):
         super(CoordAttention, self).__init__()
         self.pool_w, self.pool_h = nn.AdaptiveAvgPool2d((1, None)), nn.AdaptiveAvgPool2d((None, 1))
