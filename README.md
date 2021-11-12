@@ -169,6 +169,7 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 
 ## TODO
 - [ ] add unit test for models
-- [ ] add Hybrid Vision Transformer
+- [x] add Hybrid Vision Transformer
 - [ ] channels_last
 - [ ] inplace_abn
+- [ ] grad-CAM

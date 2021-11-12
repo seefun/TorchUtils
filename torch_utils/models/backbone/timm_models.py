@@ -9,7 +9,7 @@ popular_models = {
 }
 
 
-def create_timm_model(name, pretrained, num_classes=0, in_channel=3):
+def create_timm_model(name, pretrained=True, num_classes=0, in_channel=3):
     # when in_channel==1, we suggest to manually modify the weight of the first layer by sum func
     # timm implementation uses strategy of circular copying RGB channel weight and rescale (not good for all cases)
     if num_classes:
