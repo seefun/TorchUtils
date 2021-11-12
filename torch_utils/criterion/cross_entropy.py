@@ -137,3 +137,116 @@ class topkLoss(nn.Module):
 #         loss += self.alpha * sum([F.kl_div(
 #             logp_mixture, p_split, reduction='batchmean') for p_split in probs]) / len(probs)
 #         return loss
+
+
+class SoftBCEWithLogitsLoss(nn.Module):
+    """
+    Drop-in replacement for nn.BCEWithLogitsLoss with few additions:
+    - Support of ignore_index value
+    - Support of label smoothing
+    """
+
+    __constants__ = ["weight", "pos_weight", "reduction", "ignore_index", "smooth_factor"]
+
+    def __init__(
+        self, weight=None, ignore_index=255, reduction="mean", smooth_factor=None, pos_weight=None
+    ):
+        super().__init__()
+        self.ignore_index = ignore_index
+        self.reduction = reduction
+        self.smooth_factor = smooth_factor
+        self.register_buffer("weight", weight)
+        self.register_buffer("pos_weight", pos_weight)
+
+    def forward(self, input, target):
+        if self.smooth_factor is not None:
+            soft_targets = ((1 - target) * self.smooth_factor + target * (1 - self.smooth_factor)).type_as(input)
+        else:
+            soft_targets = target.type_as(input)
+
+        loss = F.binary_cross_entropy_with_logits(
+            input, soft_targets, self.weight, pos_weight=self.pos_weight, reduction="none"
+        )
+
+        if self.ignore_index is not None:
+            not_ignored_mask = target != self.ignore_index
+            loss *= not_ignored_mask.type_as(loss)
+
+        if self.reduction == "mean":
+            loss = loss.mean()
+
+        if self.reduction == "sum":
+            loss = loss.sum()
+
+        return loss
+
+
+def label_smoothed_nll_loss(
+    lprobs: torch.Tensor, target: torch.Tensor, epsilon: float, ignore_index=None, reduction="mean", dim=-1
+) -> torch.Tensor:
+    """
+    Source: https://github.com/pytorch/fairseq/blob/master/fairseq/criterions/label_smoothed_cross_entropy.py
+    :param lprobs: Log-probabilities of predictions (e.g after log_softmax)
+    :param target:
+    :param epsilon:
+    :param ignore_index:
+    :param reduction:
+    :return:
+    """
+    if target.dim() == lprobs.dim() - 1:
+        target = target.unsqueeze(dim)
+
+    if ignore_index is not None:
+        pad_mask = target.eq(ignore_index)
+        target = target.masked_fill(pad_mask, 0)
+        nll_loss = -lprobs.gather(dim=dim, index=target)
+        smooth_loss = -lprobs.sum(dim=dim, keepdim=True)
+
+        # nll_loss.masked_fill_(pad_mask, 0.0)
+        # smooth_loss.masked_fill_(pad_mask, 0.0)
+        nll_loss = nll_loss.masked_fill(pad_mask, 0.0)
+        smooth_loss = smooth_loss.masked_fill(pad_mask, 0.0)
+    else:
+        nll_loss = -lprobs.gather(dim=dim, index=target)
+        smooth_loss = -lprobs.sum(dim=dim, keepdim=True)
+
+        nll_loss = nll_loss.squeeze(dim)
+        smooth_loss = smooth_loss.squeeze(dim)
+
+    if reduction == "sum":
+        nll_loss = nll_loss.sum()
+        smooth_loss = smooth_loss.sum()
+    if reduction == "mean":
+        nll_loss = nll_loss.mean()
+        smooth_loss = smooth_loss.mean()
+
+    eps_i = epsilon / lprobs.size(dim)
+    loss = (1.0 - epsilon) * nll_loss + eps_i * smooth_loss
+    return loss
+
+
+class SoftCrossEntropyLoss(nn.Module):
+    """
+    Drop-in replacement for nn.CrossEntropyLoss with few additions:
+    - Support of label smoothing
+    """
+
+    __constants__ = ["reduction", "ignore_index", "smooth_factor"]
+
+    def __init__(self, reduction: str = "mean", smooth_factor: float = 0.0, ignore_index=255, dim=1):
+        super().__init__()
+        self.smooth_factor = smooth_factor
+        self.ignore_index = ignore_index
+        self.reduction = reduction
+        self.dim = dim
+
+    def forward(self, input, target):
+        log_prob = F.log_softmax(input, dim=self.dim)
+        return label_smoothed_nll_loss(
+            log_prob,
+            target,
+            epsilon=self.smooth_factor,
+            ignore_index=self.ignore_index,
+            reduction=self.reduction,
+            dim=self.dim,
+        )
