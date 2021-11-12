@@ -11,3 +11,4 @@ from .lovasz import BinaryLovaszLoss, LovaszLoss
 from .focal import BinaryFocalLoss, FocalLoss
 from .bitempered_loss import BiTemperedLogisticLoss, BinaryBiTemperedLogisticLoss
 from .dice import DiceLoss
+from .rmi import RMILoss
