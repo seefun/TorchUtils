@@ -149,7 +149,7 @@ class SoftBCEWithLogitsLoss(nn.Module):
     __constants__ = ["weight", "pos_weight", "reduction", "ignore_index", "smooth_factor"]
 
     def __init__(
-        self, weight=None, ignore_index=255, reduction="mean", smooth_factor=None, pos_weight=None
+        self, weight=None, ignore_index=None, reduction="mean", smooth_factor=None, pos_weight=None
     ):
         super().__init__()
         self.ignore_index = ignore_index
