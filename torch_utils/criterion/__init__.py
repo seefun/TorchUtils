@@ -12,5 +12,5 @@ from .cross_entropy import SoftBCEWithLogitsLoss, SoftCrossEntropyLoss
 from .lovasz import BinaryLovaszLoss, LovaszLoss
 from .focal import BinaryFocalLoss, FocalLoss
 from .bitempered_loss import BiTemperedLogisticLoss, BinaryBiTemperedLogisticLoss
-from .dice import DiceLoss
+from .dice import DiceLoss, TverskyLoss
 from .rmi import RMILoss

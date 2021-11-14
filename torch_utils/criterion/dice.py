@@ -1,20 +1,78 @@
-# from https://github.com/BloodAxe/pytorch-toolbelt
+# reference: https://github.com/qubvel/segmentation_models.pytorch
+# reference: https://github.com/BloodAxe/pytorch-toolbelt
 
-from typing import List
+from typing import List, Optional
 
 import torch
+import numpy as np
 import torch.nn.functional as F
-from pytorch_toolbelt.utils.torch_utils import to_tensor
-from torch import Tensor
 from torch.nn.modules.loss import _Loss
 
-from .functional import soft_dice_score
-
-__all__ = ["DiceLoss"]
+__all__ = ["DiceLoss", "TverskyLoss"]
 
 BINARY_MODE = "binary"
 MULTICLASS_MODE = "multiclass"
 MULTILABEL_MODE = "multilabel"
+
+
+def to_tensor(x, dtype=None) -> torch.Tensor:
+    if isinstance(x, torch.Tensor):
+        if dtype is not None:
+            x = x.type(dtype)
+        return x
+    if isinstance(x, np.ndarray):
+        x = torch.from_numpy(x)
+        if dtype is not None:
+            x = x.type(dtype)
+        return x
+    if isinstance(x, (list, tuple)):
+        x = np.array(x)
+        x = torch.from_numpy(x)
+        if dtype is not None:
+            x = x.type(dtype)
+        return x
+
+
+def soft_dice_score(
+    output: torch.Tensor, target: torch.Tensor, smooth: float = 0.0, eps: float = 1e-7, dims=None
+) -> torch.Tensor:
+    """
+    :param output:
+    :param target:
+    :param smooth:
+    :param eps:
+    :return:
+    Shape:
+        - Input: :math:`(N, NC, *)` where :math:`*` means any number
+            of additional dimensions
+        - Target: :math:`(N, NC, *)`, same shape as the input
+        - Output: scalar.
+    """
+    assert output.size() == target.size()
+    if dims is not None:
+        intersection = torch.sum(output * target, dim=dims)
+        cardinality = torch.sum(output + target, dim=dims)
+    else:
+        intersection = torch.sum(output * target)
+        cardinality = torch.sum(output + target)
+    dice_score = (2.0 * intersection + smooth) / (cardinality + smooth).clamp_min(eps)
+    return dice_score
+
+
+def soft_tversky_score(output: torch.Tensor, target: torch.Tensor, alpha: float, beta: float,
+                       smooth: float = 0.0, eps: float = 1e-7, dims=None) -> torch.Tensor:
+    assert output.size() == target.size()
+    if dims is not None:
+        intersection = torch.sum(output * target, dim=dims)  # TP
+        fp = torch.sum(output * (1. - target), dim=dims)
+        fn = torch.sum((1 - output) * target, dim=dims)
+    else:
+        intersection = torch.sum(output * target)  # TP
+        fp = torch.sum(output * (1. - target))
+        fn = torch.sum((1 - output) * target)
+
+    tversky_score = (intersection + smooth) / (intersection + alpha * fp + beta * fn + smooth).clamp_min(eps)
+    return tversky_score
 
 
 class DiceLoss(_Loss):
@@ -57,7 +115,7 @@ class DiceLoss(_Loss):
         self.ignore_index = ignore_index
         self.log_loss = log_loss
 
-    def forward(self, y_pred: Tensor, y_true: Tensor) -> Tensor:
+    def forward(self, y_pred, y_true):
         """
         :param y_pred: NxCxHxW
         :param y_true: NxHxW
@@ -129,3 +187,51 @@ class DiceLoss(_Loss):
             loss = loss[self.classes]
 
         return loss.mean()
+
+
+class TverskyLoss(DiceLoss):
+    """Implementation of Tversky loss for image segmentation task. 
+    Where TP and FP is weighted by alpha and beta params.
+    With alpha == beta == 0.5, this loss becomes equal DiceLoss.
+    It supports binary, multiclass and multilabel cases
+    Args:
+        mode: Metric mode {'binary', 'multiclass', 'multilabel'}
+        classes: Optional list of classes that contribute in loss computation;
+        By default, all channels are included.
+        log_loss: If True, loss computed as ``-log(tversky)`` otherwise ``1 - tversky``
+        from_logits: If True assumes input is raw logits
+        smooth:
+        ignore_index: Label that indicates ignored pixels (does not contribute to loss)
+        eps: Small epsilon for numerical stability
+        alpha: Weight constant that penalize model for FPs (False Positives)
+        beta: Weight constant that penalize model for FNs (False Positives)
+        gamma: Constant that squares the error function. Defaults to ``1.0``
+    Return:
+        loss: torch.Tensor
+    """
+
+    def __init__(
+        self,
+        mode: str,
+        classes: List[int] = None,
+        log_loss: bool = False,
+        from_logits: bool = True,
+        smooth: float = 0.0,
+        ignore_index: Optional[int] = None,
+        eps: float = 1e-7,
+        alpha: float = 0.5,
+        beta: float = 0.5,
+        gamma: float = 1.0,
+    ):
+
+        assert mode in {BINARY_MODE, MULTILABEL_MODE, MULTICLASS_MODE}
+        super().__init__(mode, classes, log_loss, from_logits, smooth, ignore_index, eps)
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+
+    def aggregate_loss(self, loss):
+        return loss.mean() ** self.gamma
+
+    def compute_score(self, output, target, smooth=0.0, eps=1e-7, dims=None) -> torch.Tensor:
+        return soft_tversky_score(output, target, self.alpha, self.beta, smooth, eps, dims)

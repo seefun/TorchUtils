@@ -36,6 +36,26 @@ class TestBinaryLoss:
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
         print(loss)
 
+    def test_toolbelt_ce_binary(self):
+        loss_fn = criterion.SoftBCEWithLogitsLoss()
+        loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
+        print(loss)
+
+    def test_rmi(self):
+        loss_fn = criterion.RMILoss()
+        loss = loss_fn(torch.rand(1, 2, 32, 32), torch.rand(1, 2, 32, 32))
+        print(loss)
+
+    def test_dice_binary(self):
+        loss_fn = criterion.DiceLoss('binary')
+        loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
+        print(loss)
+
+    def test_tversky_binary(self):
+        loss_fn = criterion.TverskyLoss('binary')
+        loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
+        print(loss)
+
 
 class TestMultiLoss:
     y_pred = torch.tensor([[+1, -1, -1, -1],
@@ -56,5 +76,20 @@ class TestMultiLoss:
 
     def test_smoothing(self):
         loss_fn = criterion.LabelSmoothingCrossEntropy()
+        loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
+        print(loss)
+
+    def test_toolbelt_ce_multiply(self):
+        loss_fn = criterion.SoftCrossEntropyLoss()
+        loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
+        print(loss)
+
+    def test_dice_multiply(self):
+        loss_fn = criterion.DiceLoss('multiclass')
+        loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
+        print(loss)
+
+    def test_tversky_multiply(self):
+        loss_fn = criterion.TverskyLoss('multiclass')
         loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
         print(loss)
