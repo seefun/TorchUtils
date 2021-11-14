@@ -36,6 +36,11 @@ class ImageModel(nn.Module):
                         SEBlock(num_feature),
                         MultiSampleDropoutFC(in_ch=num_feature, out_ch=classes))
 
+        elif fc == 'dropout':
+            self.fc = nn.Sequential(
+                        nn.Dropout(0.25),
+                        nn.Linear(num_feature, classes, bias=True))
+
         elif fc == '2layers':
             self.fc = nn.Sequential(
                         nn.Linear(num_feature, 512, bias=False),
@@ -43,6 +48,7 @@ class ImageModel(nn.Module):
                         nn.SiLU(inplace=True),
                         nn.Dropout(),
                         nn.Linear(512, classes, bias=True))
+
         else:
             self.fc = nn.Linear(in_features=num_feature, out_features=classes, bias=True)
 

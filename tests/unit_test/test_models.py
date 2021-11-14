@@ -8,7 +8,7 @@ class TestModel:
 
     def test_cls_model(self):
         pooling = ['gem', 'concat', 'avg']
-        fc = ['multi-dropout', 'attention', '2layers', 'simple']
+        fc = ['multi-dropout', 'attention', '2layers', 'simple', None]
 
         for pool_i in pooling:
             model_conv = models.ImageModel(pooling=pool_i, pretrained=False).eval()
@@ -38,3 +38,9 @@ class TestModel:
     def test_DolgNet(self):
         model_conv = advanced.DolgNet('resnet101', False, 224, 3, 512, 512).eval()
         model_conv(TestModel.inputs)
+
+    def test_hybrid(self):
+        model_conv = models.HybridModel(vit='swin_base_patch4_window7_224',
+                                        embedder='tf_efficientnet_b4_ns',
+                                        classes=1, input_size=448, pretrained=False)
+        model_conv(torch.rand(1, 3, 448, 448))

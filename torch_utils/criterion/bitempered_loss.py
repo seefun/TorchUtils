@@ -189,15 +189,15 @@ class BiTemperedLogisticLoss(nn.Module):
     https://arxiv.org/abs/1906.03361
     """
 
-    def __init__(self, t1: float, t2: float, smoothing=0.0, ignore_index=None, reduction: str = "mean"):
+    def __init__(self, t1=0.8, t2=1.4, smoothing=0.0, ignore_index=None, reduction: str = "mean"):
         """
 
         Args:
-            t1:
-            t2:
-            smoothing:
-            ignore_index:
-            reduction:
+            t1: Temperature 1 (< 1.0 for boundedness).
+            t2: Temperature 2 (> 1.0 for tail heaviness, < 1.0 for finite support).
+            smoothing: Label smoothing parameter between [0, 1). Default 0.0.
+            ignore_index: ignore_index
+            reduction: reduction
         """
         super(BiTemperedLogisticLoss, self).__init__()
         self.t1 = t1
@@ -233,16 +233,16 @@ class BinaryBiTemperedLogisticLoss(nn.Module):
     """
 
     def __init__(
-        self, t1: float, t2: float, smoothing: float = 0.0, ignore_index: Optional[int] = None, reduction: str = "mean"
+        self, t1=0.8, t2=1.4, smoothing: float = 0.0, ignore_index: Optional[int] = None, reduction: str = "mean"
     ):
         """
 
         Args:
-            t1:
-            t2:
-            smoothing:
-            ignore_index:
-            reduction:
+            t1: Temperature 1 (< 1.0 for boundedness).
+            t2: Temperature 2 (> 1.0 for tail heaviness, < 1.0 for finite support).
+            smoothing: Label smoothing parameter between [0, 1). Default 0.0.
+            ignore_index: ignore_index
+            reduction: reduction
         """
         super().__init__()
         self.t1 = t1

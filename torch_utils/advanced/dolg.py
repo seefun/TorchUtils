@@ -103,7 +103,7 @@ class DolgNet(nn.Module):
         output = self.cnn(x)
 
         local_feat = self.local_branch(output[0])  # ,hidden_channel,16,16
-        global_feat = self.fc_1(self.gem_pool(output[1]).squeeze())  # ,1024
+        global_feat = self.fc_1(self.gem_pool(output[1]))  # ,1024
 
         feat = self.orthogonal_fusion(local_feat, global_feat)
         feat = self.gap(feat).squeeze()
