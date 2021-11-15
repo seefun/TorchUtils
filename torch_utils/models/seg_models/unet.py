@@ -23,6 +23,8 @@ class PixelShuffleUpSample(nn.Module):
 class CenterBlock(nn.Module):
     def __init__(self, in_channel, out_channel, aspp=False, dilations=[1, 6, 12, 18]):
         super().__init__()
+        self.bn = nn.BatchNorm2d(in_channel)
+        self.relu = nn.ReLU()
         if aspp:
             self.conv = ASPP(inplanes=in_channel,
                              mid_c=out_channel,
@@ -31,6 +33,7 @@ class CenterBlock(nn.Module):
             self.conv = conv3x3(in_channel, out_channel)
 
     def forward(self, inputs):
+        inputs = self.relu(self.bn(inputs))
         x = self.conv(inputs)
         return x
 
@@ -59,7 +62,7 @@ class DecodeBlock(nn.Module):
         else:
             self.attention = nn.Identity()
         self.conv1x1 = conv1x1(in_channel, out_channel)
-    
+
     @property
     def upsample_shape(self):
         return self._upsample_shape
@@ -295,10 +298,14 @@ class UNet(nn.Module):
                 final_channel = decoder_channels[-1]
 
             self.head = nn.Sequential(
+                nn.BatchNorm2d(final_channel),
+                nn.SiLU(True),
+                nn.Dropout(dropout),
                 conv3x3(final_channel, decoder_channels[4]),
                 nn.BatchNorm2d(decoder_channels[4]),
                 nn.SiLU(True),
-                conv1x1(decoder_channels[4], self.out_channel)
+                nn.Conv2d(decoder_channels[4], self.out_channel,
+                          kernel_size=1, stride=1, padding=0, dilation=1, bias=True)
             )
         else:
             if hypercolumns:
@@ -307,10 +314,14 @@ class UNet(nn.Module):
                 final_channel = encoder_channels[0]
 
             self.head = nn.Sequential(
+                nn.BatchNorm2d(final_channel),
+                nn.SiLU(True),
+                nn.Dropout(dropout),
                 conv1x1(final_channel, self.out_channel * 4),
                 nn.BatchNorm2d(self.out_channel * 4),
                 nn.SiLU(True),
-                conv3x3(self.out_channel * 4, self.out_channel)
+                nn.Conv2d(self.out_channel * 4, self.out_channel,
+                          kernel_size=3, stride=1, padding=1, dilation=1, bias=True)
             )
 
         # deepsupervision
