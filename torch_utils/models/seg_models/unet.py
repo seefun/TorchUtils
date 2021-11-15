@@ -90,6 +90,21 @@ def get_encoder_info(name='resnest50d', verbose=True):
     return encoder_channels
 
 
+def get_deepsupervision_head(in_channel, out_channel, relu=False):
+    if relu:
+        return nn.Sequential(
+                    nn.BatchNorm2d(in_channel),
+                    nn.SiLU(True),
+                    nn.Conv2d(in_channel, out_channel,
+                              kernel_size=1, stride=1, padding=0, dilation=1, bias=True)
+                )
+    else:
+        return nn.Sequential(
+                    nn.Conv2d(in_channel, out_channel,
+                              kernel_size=1, stride=1, padding=0, dilation=1, bias=True)
+                )
+
+
 class UNet_neck(nn.Module):
     '''
     UNet neck
@@ -319,15 +334,15 @@ class UNet(nn.Module):
         self.deepsupervision = deepsupervision
         if self.deepsupervision:
             if neck:
-                self.deep4 = conv1x1(decoder_channels[0], self.out_channel)
-                self.deep3 = conv1x1(decoder_channels[1], self.out_channel)
-                self.deep2 = conv1x1(decoder_channels[2], self.out_channel)
-                self.deep1 = conv1x1(decoder_channels[3], self.out_channel)
+                self.deep4 = get_deepsupervision_head(decoder_channels[0], self.out_channel, relu=True)
+                self.deep3 = get_deepsupervision_head(decoder_channels[1], self.out_channel, relu=True)
+                self.deep2 = get_deepsupervision_head(decoder_channels[2], self.out_channel, relu=True)
+                self.deep1 = get_deepsupervision_head(decoder_channels[3], self.out_channel, relu=True)
             else:
-                self.deep4 = conv1x1(encoder_channels[-1], self.out_channel)
-                self.deep3 = conv1x1(encoder_channels[-2], self.out_channel)
-                self.deep2 = conv1x1(encoder_channels[-3], self.out_channel)
-                self.deep1 = conv1x1(encoder_channels[-4], self.out_channel)
+                self.deep4 = get_deepsupervision_head(encoder_channels[-1], self.out_channel)
+                self.deep3 = get_deepsupervision_head(encoder_channels[-2], self.out_channel)
+                self.deep2 = get_deepsupervision_head(encoder_channels[-3], self.out_channel)
+                self.deep1 = get_deepsupervision_head(encoder_channels[-4], self.out_channel)
 
         # classification head
         self.clshead = clshead
