@@ -23,6 +23,8 @@ class PixelShuffleUpSample(nn.Module):
 class CenterBlock(nn.Module):
     def __init__(self, in_channel, out_channel, aspp=False, dilations=[1, 6, 12, 18]):
         super().__init__()
+        self.bn = nn.BatchNorm2d(in_channel)
+        self.relu = nn.ReLU()
         if aspp:
             self.conv = ASPP(inplanes=in_channel,
                              mid_c=out_channel,
@@ -31,6 +33,7 @@ class CenterBlock(nn.Module):
             self.conv = conv3x3(in_channel, out_channel)
 
     def forward(self, inputs):
+        inputs = self.relu(self.bn(inputs))
         x = self.conv(inputs)
         return x
 
@@ -310,6 +313,9 @@ class UNet(nn.Module):
                 final_channel = decoder_channels[-1]
 
             self.head = nn.Sequential(
+                nn.BatchNorm2d(final_channel),
+                nn.SiLU(True),
+                nn.Dropout(dropout),
                 conv3x3(final_channel, decoder_channels[4]),
                 nn.BatchNorm2d(decoder_channels[4]),
                 nn.SiLU(True),
@@ -323,6 +329,9 @@ class UNet(nn.Module):
                 final_channel = encoder_channels[0]
 
             self.head = nn.Sequential(
+                nn.BatchNorm2d(final_channel),
+                nn.SiLU(True),
+                nn.Dropout(dropout),
                 conv1x1(final_channel, self.out_channel * 4),
                 nn.BatchNorm2d(self.out_channel * 4),
                 nn.SiLU(True),
