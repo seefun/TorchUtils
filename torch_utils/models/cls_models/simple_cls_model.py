@@ -43,11 +43,11 @@ class ImageModel(nn.Module):
 
         elif fc == '2layers':
             self.fc = nn.Sequential(
-                        nn.Linear(num_feature, 512, bias=False),
-                        nn.BatchNorm1d(512),
+                        nn.Linear(num_feature, 1280, bias=False),
+                        nn.BatchNorm1d(1280),
                         nn.SiLU(inplace=True),
                         nn.Dropout(),
-                        nn.Linear(512, classes, bias=True))
+                        nn.Linear(1280, classes, bias=True))
 
         else:
             self.fc = nn.Linear(in_features=num_feature, out_features=classes, bias=True)

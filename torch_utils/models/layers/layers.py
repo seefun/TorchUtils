@@ -314,17 +314,17 @@ def get_simple_fc(in_ch, num_classes, flatten=False):
     if flatten:
         return nn.Sequential(
             nn.Flatten(),
-            nn.Linear(in_ch, 512),
+            nn.Linear(in_ch, 1280),
             Swish(inplace=True),
             nn.Dropout(),
-            nn.Linear(512, num_classes),
+            nn.Linear(1280, num_classes),
         )
     else:
         return nn.Sequential(
-            nn.Linear(in_ch, 512),
+            nn.Linear(in_ch, 1280),
             Swish(),
             nn.Dropout(),
-            nn.Linear(512, num_classes),
+            nn.Linear(1280, num_classes),
         )
 
 
