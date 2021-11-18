@@ -31,6 +31,21 @@ class TestBinaryLoss:
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
         print(loss)
 
+    def test_kld_sigmoid(self):
+        loss_fn = criterion.KLDivLosswLogits()
+        loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
+        print(loss)
+
+    def test_jsd(self):
+        loss_fn = criterion.JSDivLosswSoftmax()
+        loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
+        print(loss)
+
+    def test_kld(self):
+        loss_fn = criterion.JSDivLosswLogits()
+        loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
+        print(loss)
+
     def test_soft_target_ce(self):
         loss_fn = criterion.SoftTargetCrossEntropy()
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)

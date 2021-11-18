@@ -1,5 +1,6 @@
 from .cross_entropy import LabelSmoothingCrossEntropy, SmoothBCEwLogits
-from .cross_entropy import SoftTargetCrossEntropy, KLDivLosswSoftmax
+from .cross_entropy import SoftTargetCrossEntropy
+from .cross_entropy import KLDivLosswSoftmax, KLDivLosswLogits, JSDivLosswSoftmax, JSDivLosswLogits
 from .cross_entropy import topkLoss
 
 from .metric_loss import CircleLoss, ArcFaceLoss, SupConLoss
