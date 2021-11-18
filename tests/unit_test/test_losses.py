@@ -26,7 +26,7 @@ class TestBinaryLoss:
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
         print(loss)
 
-    def test_kld(self):
+    def test_kld_softmax(self):
         loss_fn = criterion.KLDivLosswSoftmax()
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
         print(loss)
@@ -36,12 +36,12 @@ class TestBinaryLoss:
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
         print(loss)
 
-    def test_jsd(self):
+    def test_jsd_softmax(self):
         loss_fn = criterion.JSDivLosswSoftmax()
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
         print(loss)
 
-    def test_kld(self):
+    def test_jsd_sigmoid(self):
         loss_fn = criterion.JSDivLosswLogits()
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
         print(loss)
