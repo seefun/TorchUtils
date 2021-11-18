@@ -9,7 +9,7 @@ from torch_utils.models import create_timm_model
 class ImageModel(nn.Module):
 
     def __init__(self,
-                 name='resnest50d',
+                 name='seresnext50_32x4d',
                  pretrained=True,
                  pooling='concat',
                  fc='multi-dropout',
@@ -43,11 +43,11 @@ class ImageModel(nn.Module):
 
         elif fc == '2layers':
             self.fc = nn.Sequential(
-                        nn.Linear(num_feature, 512, bias=False),
-                        nn.BatchNorm1d(512),
+                        nn.Linear(num_feature, 1280, bias=False),
+                        nn.BatchNorm1d(1280),
                         nn.SiLU(inplace=True),
                         nn.Dropout(),
-                        nn.Linear(512, classes, bias=True))
+                        nn.Linear(1280, classes, bias=True))
 
         else:
             self.fc = nn.Linear(in_features=num_feature, out_features=classes, bias=True)
@@ -60,7 +60,7 @@ class ImageModel(nn.Module):
         return logits, embedding
 
 
-def get_encoder_last_channel(name='resnest50d', verbose=True):
+def get_encoder_last_channel(name='seresnext50_32x4d', verbose=True):
     model = create_timm_model(name, pretrained=False).eval()
     features = model(torch.rand(1, 3, 224, 224))
     if verbose:
@@ -69,7 +69,7 @@ def get_encoder_last_channel(name='resnest50d', verbose=True):
     return features[-1].shape[1]
 
 
-def get_conv_model(name='resnest50d',
+def get_conv_model(name='seresnext50_32x4d',
                    pretrained=True,
                    pooling='avg',
                    fc='multi-dropout',

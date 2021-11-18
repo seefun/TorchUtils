@@ -253,7 +253,7 @@ class FastGlobalConcatPool2d(nn.Module):
 
 
 class MultiSampleDropoutFC(nn.Module):
-    def __init__(self, in_ch, out_ch, num_sample=4, dropout=0.5):
+    def __init__(self, in_ch, out_ch, num_sample=5, dropout=0.5):
         super(MultiSampleDropoutFC, self).__init__()
         self.dropouts = nn.ModuleList([nn.Dropout(dropout) for _ in range(num_sample)])
         self.fc = nn.Linear(in_ch, out_ch, bias=True)
@@ -314,17 +314,17 @@ def get_simple_fc(in_ch, num_classes, flatten=False):
     if flatten:
         return nn.Sequential(
             nn.Flatten(),
-            nn.Linear(in_ch, 512),
+            nn.Linear(in_ch, 1280),
             Swish(inplace=True),
             nn.Dropout(),
-            nn.Linear(512, num_classes),
+            nn.Linear(1280, num_classes),
         )
     else:
         return nn.Sequential(
-            nn.Linear(in_ch, 512),
+            nn.Linear(in_ch, 1280),
             Swish(),
             nn.Dropout(),
-            nn.Linear(512, num_classes),
+            nn.Linear(1280, num_classes),
         )
 
 

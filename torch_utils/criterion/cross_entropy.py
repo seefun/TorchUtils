@@ -79,6 +79,47 @@ class KLDivLosswSoftmax(nn.Module):
         return loss
 
 
+class KLDivLosswLogits(nn.Module):
+    """KL-divergence with Logits"""
+
+    def __init__(self):
+        super(KLDivLosswLogits, self).__init__()
+        self.loss = nn.KLDivLoss(reduction='batchmean')
+
+    def forward(self, model_output, target):
+        log = torch.sigmoid(model_output)
+        loss = self.loss(log, target)
+        return loss
+
+
+class JSDivLosswSoftmax(nn.Module):
+    """JS-divergence with softmax"""
+
+    def __init__(self):
+        super(JSDivLosswSoftmax, self).__init__()
+        self.loss = nn.KLDivLoss(reduction='batchmean')
+
+    def forward(self, model_output, target):
+        log = F.log_softmax(model_output, dim=-1)
+        m = (log + target) / 2.0
+        loss = 0.5 * (self.loss(log, m) + self.loss(target, m))
+        return loss
+
+
+class JSDivLosswLogits(nn.Module):
+    """JS-divergence with Logits"""
+
+    def __init__(self):
+        super(JSDivLosswLogits, self).__init__()
+        self.loss = nn.KLDivLoss(reduction='batchmean')
+
+    def forward(self, model_output, target):
+        log = torch.sigmoid(model_output)
+        m = (log + target) / 2.0
+        loss = 0.5 * (self.loss(log, m) + self.loss(target, m))
+        return loss
+
+
 class topkLoss(nn.Module):
     """topkLoss: Online Hard Example Mining"""
 
