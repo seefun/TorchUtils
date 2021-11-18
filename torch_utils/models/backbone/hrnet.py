@@ -10,3 +10,7 @@ def create_hrnet_model(name, pretrained=True, num_classes=0, in_channel=3, seg_m
             model.incre_modules = None
             model.num_features = 256
     return model
+
+# aux fcnhead 3x3(c->c) -> 1x1(c->out_c)
+
+# pretrained inchannel changed: conv.weight = nn.Parameter(conv.weight.repeat(xxx) just like timm
