@@ -284,6 +284,22 @@ class GaussianDropout(nn.Module):
         else:
             return x
 
+
+class UOut(nn.Module):
+    def __init__(self, beta=0.1):
+        super(UOut, self).__init__()
+        self.beta = torch.Tensor([beta])
+
+    def forward(self, x):
+        if self.train():
+            epsilon = torch.rand(x.size()) * self.beta * 2 - self.beta + 1
+            epsilon = Variable(epsilon)
+            if x.is_cuda:
+                epsilon = epsilon.cuda()
+            return x * epsilon
+        else:
+            return x
+
 ###### activation ######
 
 
