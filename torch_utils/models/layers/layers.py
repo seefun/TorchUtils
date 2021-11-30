@@ -4,6 +4,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.nn.parameter import Parameter
 from torch.nn import init
+from torch.autograd import Variable
 
 
 def conv3x3(in_channel, out_channel):  # not change resolusion
@@ -266,6 +267,22 @@ class MultiSampleDropoutFC(nn.Module):
                 out += self.fc(dropout(x))
         out /= len(self.dropouts)
         return out
+
+
+class GaussianDropout(nn.Module):
+    def __init__(self, alpha=1.0):
+        super(GaussianDropout, self).__init__()
+        self.alpha = torch.Tensor([alpha])
+
+    def forward(self, x):
+        if self.train():
+            epsilon = torch.randn(x.size()) * self.alpha + 1
+            epsilon = Variable(epsilon)
+            if x.is_cuda:
+                epsilon = epsilon.cuda()
+            return x * epsilon
+        else:
+            return x
 
 ###### activation ######
 
