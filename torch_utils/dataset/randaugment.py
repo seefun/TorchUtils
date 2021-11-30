@@ -112,15 +112,15 @@ def segRandAugment(N=3, M1=2, M2=0.25, p=0.5, mode="all", ignore_label=255):
         ], p=p),
         albumentations.RandomBrightnessContrast(contrast_limit=M2 * 0.4, p=p),
         albumentations.ColorJitter(
-            brightness=0.0, contrast=0.0, saturation=M2 * 0.1, hue=0.0, p=p),
+            brightness=0.0, contrast=0.0, saturation=M2 * 0.2, hue=0.0, p=p),
         albumentations.ColorJitter(
-            brightness=0.0, contrast=0.0, saturation=0.0, hue=M2 * 0.1, p=p),
+            brightness=0.0, contrast=0.0, saturation=0.0, hue=M2 * 0.05, p=p),
         albumentations.ImageCompression(
             quality_lower=int(100 - M2 * 39), quality_upper=99, p=p),
         albumentations.OneOf([
             RandomBrightnessContrastPointwise(
                 brightness=M2 * 0.1, contrast=M2 * 0.1, p=1),
-            albumentations.GaussNoise((0, 32 * M2), p=1)
+            albumentations.GaussNoise((0, 64 * M2), p=1)
         ], p=p)
     ]
 
