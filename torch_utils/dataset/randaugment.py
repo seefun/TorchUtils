@@ -36,8 +36,8 @@ def randAugment(N=2, M=4, p=1.0, mode="all", cut_out=False):
         albumentations.Affine(shear={'x': (-shear_x[M], shear_x[M])}, p=p),
         albumentations.Affine(shear={'y': (-shear_y[M], shear_y[M])}, p=p),
         # Color Based
-        albumentations.RandomContrast(limit=contrast[M], p=p),
-        albumentations.RandomBrightness(limit=bright[M], p=p),
+        albumentations.RandomBrightnessContrast(contrast_limit=contrast[M], p=p),
+        albumentations.RandomBrightnessContrast(brightness_limit=bright[M], p=p),
         albumentations.ColorJitter(brightness=0.0, contrast=0.0, saturation=sat[M], hue=0.0, p=p),
         albumentations.ColorJitter(brightness=0.0, contrast=0.0, saturation=0.0, hue=hue[M], p=p),
         albumentations.Sharpen(alpha=(0.1, shar[M]), lightness=(0.5, 1.0), p=p),
