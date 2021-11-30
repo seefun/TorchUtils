@@ -46,7 +46,7 @@ def randAugment(N=2, M=4, p=1.0, mode="all", cut_out=False):
                 albumentations.MotionBlur(p=0.5),
                 albumentations.MedianBlur(blur_limit=3, p=1),
                 albumentations.Blur(blur_limit=3, p=1), ]), p=blur[M] * p),
-        albumentations.GaussNoise(var_limit=(8.0 * noise[M], 64.0 * noise[M]), per_channel=True, p=p)
+        albumentations.GaussNoise(var_limit=(0.0 * noise[M], 32.0 * noise[M]), per_channel=True, p=p)
     ]
     # Sampling from the Transformation search space
     if mode == "geo":
