@@ -275,7 +275,7 @@ class GaussianDropout(nn.Module):
         self.alpha = torch.Tensor([alpha])
 
     def forward(self, x):
-        if self.train():
+        if self.training:
             epsilon = torch.randn(x.size()) * self.alpha + 1
             epsilon = Variable(epsilon)
             if x.is_cuda:
@@ -291,7 +291,7 @@ class UOut(nn.Module):
         self.beta = torch.Tensor([beta])
 
     def forward(self, x):
-        if self.train():
+        if self.training:
             epsilon = torch.rand(x.size()) * self.beta * 2 - self.beta + 1
             epsilon = Variable(epsilon)
             if x.is_cuda:
