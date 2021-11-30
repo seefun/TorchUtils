@@ -10,6 +10,8 @@ import copy
 import numpy as np
 from albumentations import ImageOnlyTransform
 
+__all__ = ['RandomBrightnessNoise', 'RandomBrightnessContrastPointwise', 'RandomSnowNoise', 'RandomEraseNoise']
+
 
 def generate_perlin_noise_2d(shape, res):
     assert len(shape) == 2
