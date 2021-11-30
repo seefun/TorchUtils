@@ -24,7 +24,7 @@ def randAugment(N=2, M=4, p=1.0, mode="all", cut_out=False):
     contrast = np.linspace(0.0, 0.4, 20)
     bright = np.linspace(0.0, 0.4, 20)
     sat = np.linspace(0.0, 0.2, 20)
-    hue = np.linspace(0.0, 0.2, 20)
+    hue = np.linspace(0.0, 0.1, 20)
     shar = np.linspace(0.0, 0.9, 20)
     blur = np.linspace(0, 0.2, 20)
     noise = np.linspace(0, 1, 20)
