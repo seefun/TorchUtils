@@ -27,5 +27,5 @@
 
 # 1. timm create features only models (in_chans)
 # 2. load pretrained models with adaptive input conv
-# 3. add fcnhead (hypercolumn->1x1 conv->1x1 output(3x3 output)->align_corner_upsample/pixel shuffle output)
+# 3. add fcnhead (hypercolumn->1x1 conv(n->n)->1x1 output(or 3x3 output, could choice, n->out)->align_corner_upsample/pixel shuffle output)
 # 4. add ocrhead with aux loss
