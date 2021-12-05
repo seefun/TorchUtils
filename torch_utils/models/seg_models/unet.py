@@ -312,7 +312,7 @@ class UNet(nn.Module):
             self.head = nn.Sequential(
                 conv3x3(final_channel, decoder_channels[4]),
                 nn.BatchNorm2d(decoder_channels[4]),
-                nn.SiLU(True),
+                nn.ReLU(True),
                 nn.Conv2d(decoder_channels[4], self.out_channel,
                           kernel_size=1, stride=1, padding=0, dilation=1, bias=True)
             )
@@ -322,11 +322,13 @@ class UNet(nn.Module):
             else:
                 final_channel = encoder_channels[0]
 
+            head_hidden_dim = min(self.out_channel * 16, final_channel)
+
             self.head = nn.Sequential(
-                conv1x1(final_channel, self.out_channel * 4),
-                nn.BatchNorm2d(self.out_channel * 4),
-                nn.SiLU(True),
-                nn.Conv2d(self.out_channel * 4, self.out_channel,
+                conv1x1(final_channel, head_hidden_dim),
+                nn.BatchNorm2d(head_hidden_dim),
+                nn.ReLU(True),
+                nn.Conv2d(head_hidden_dim, self.out_channel,
                           kernel_size=3, stride=1, padding=1, dilation=1, bias=True)
             )
 
