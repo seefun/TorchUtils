@@ -74,9 +74,9 @@ def random_snow_white_noise(image, max_noise_ratio=0.02, noise_range=[0.5, 1.0],
     w = image.shape[1]
     noise_ratio = max_noise_ratio * np.random.rand()
     min_noise_size = max(min_noise_size, 1)
-    max_noise_size = max(min_noise_size+1, max_noise_size)
+    max_noise_size = max(min_noise_size + 1, max_noise_size)
     assert max_noise_size < min(h, w)
-    noise_size = np.random.randint(min_noise_size, max_noise_size+1)
+    noise_size = np.random.randint(min_noise_size, max_noise_size + 1)
     h_noise = h // noise_size
     w_noise = w // noise_size
     noise = np.random.rand(h_noise, w_noise)
@@ -137,9 +137,9 @@ def random_erase_noise(image, max_noise_ratio=0.3, min_noise_size=0, max_noise_s
         + np.mean(image[:, -2:], axis=(0, 1)) / 4.0
     noise_ratio = max_noise_ratio * np.random.rand()
     min_noise_size = max(min_noise_size, 1)
-    max_noise_size = max(min_noise_size+1, max_noise_size)
+    max_noise_size = max(min_noise_size + 1, max_noise_size)
     assert max_noise_size < min(h, w)
-    noise_size = np.random.randint(min_noise_size, max_noise_size+1)
+    noise_size = np.random.randint(min_noise_size, max_noise_size + 1)
     h_noise = h // noise_size
     w_noise = w // noise_size
     noise = np.random.rand(h_noise, w_noise)

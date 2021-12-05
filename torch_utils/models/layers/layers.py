@@ -401,7 +401,6 @@ def pixelshuffle_invert(x, factor_hw):
 class SpaceToDepth(nn.Module):
     def __init__(self, block_size=4):
         super().__init__()
-        assert block_size == 4
         self.bs = block_size
 
     def forward(self, x):
@@ -413,7 +412,18 @@ class SpaceToDepth(nn.Module):
 
 
 @torch.jit.script
-class SpaceToDepthJit(object):
+class SpaceToDepthJit2(object):
+    def __call__(self, x):
+        # assuming hard-coded that block_size==2 for acceleration
+        N, C, H, W = x.size()
+        x = x.view(N, C, H // 2, 2, W // 2, 2)  # (N, C, H//bs, bs, W//bs, bs)
+        x = x.permute(0, 3, 5, 1, 2, 4).contiguous()  # (N, bs, bs, C, H//bs, W//bs)
+        x = x.view(N, C * 4, H // 2, W // 2)  # (N, C*bs^2, H//bs, W//bs)
+        return x
+
+
+@torch.jit.script
+class SpaceToDepthJit4(object):
     def __call__(self, x):
         # assuming hard-coded that block_size==4 for acceleration
         N, C, H, W = x.size()
@@ -424,12 +434,16 @@ class SpaceToDepthJit(object):
 
 
 class SpaceToDepthModule(nn.Module):
-    def __init__(self, remove_model_jit=False):
+    def __init__(self, block_size=4, remove_model_jit=False):
         super().__init__()
+        assert block_size == 2 or block_size == 4
         if not remove_model_jit:
-            self.op = SpaceToDepthJit()
+            if block_size == 2:
+                self.op = SpaceToDepthJit2()
+            else:
+                self.op = SpaceToDepthJit4()
         else:
-            self.op = SpaceToDepth()
+            self.op = SpaceToDepth(block_size)
 
     def forward(self, x):
         return self.op(x)
