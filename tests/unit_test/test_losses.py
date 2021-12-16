@@ -71,6 +71,12 @@ class TestBinaryLoss:
         loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
         print(loss)
 
+    def test_wasserstein(self):
+        loss_fn = criterion.SinkhornDistance()
+        loss, P, C = loss_fn(TestBinaryLoss.y_pred.view(-1, 1),
+                             TestBinaryLoss.y_true.view(-1, 1))
+        print(loss)
+
 
 class TestMultiLoss:
     y_pred = torch.tensor([[+1, -1, -1, -1],

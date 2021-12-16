@@ -8,6 +8,8 @@ from .metric_loss import InfoNCE
 from .metric_loss import CrossBatchMemory
 from .metric_loss import MoCo, SupConLoss_MoCo
 
+from .wasserstein import SinkhornDistance
+
 # seg losses
 from .cross_entropy import SoftBCEWithLogitsLoss, SoftCrossEntropyLoss
 from .lovasz import BinaryLovaszLoss, LovaszLoss
