@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 
 # from https://github.com/dfdazac/wassdistance/blob/master/layers.py
+
+
 class SinkhornDistance(nn.Module):
     """
     Given two empirical measures each with :math:`P_1` locations
@@ -18,6 +20,7 @@ class SinkhornDistance(nn.Module):
         - Input: :math:`(N, P_1, D_1)`, :math:`(N, P_2, D_2)`
         - Output: :math:`(N)` or :math:`()`, depending on `reduction`
     """
+
     def __init__(self, eps=0.1, max_iter=100, reduction='none'):
         super(SinkhornDistance, self).__init__()
         self.eps = eps
@@ -51,8 +54,8 @@ class SinkhornDistance(nn.Module):
         # Sinkhorn iterations
         for i in range(self.max_iter):
             u1 = u  # useful to check the update
-            u = self.eps * (torch.log(mu+1e-8) - torch.logsumexp(self.M(C, u, v), dim=-1)) + u
-            v = self.eps * (torch.log(nu+1e-8) - torch.logsumexp(self.M(C, u, v).transpose(-2, -1), dim=-1)) + v
+            u = self.eps * (torch.log(mu + 1e-8) - torch.logsumexp(self.M(C, u, v), dim=-1)) + u
+            v = self.eps * (torch.log(nu + 1e-8) - torch.logsumexp(self.M(C, u, v).transpose(-2, -1), dim=-1)) + v
             err = (u - u1).abs().sum(-1).mean()
 
             actual_nits += 1

@@ -296,25 +296,41 @@ class UOut(nn.Module):
 ###### activation ######
 
 
-class Mish(nn.Module):
-    def __init__(self):
+# class Mish(nn.Module):
+#     def __init__(self):
+#         super().__init__()
+
+#     def forward(self, x):
+#         return x * (torch.tanh(F.softplus(x)))
+
+
+# class Swish(nn.Module):
+#     def __init__(self, inplace=False):
+#         super().__init__()
+#         self.inplace = inplace
+
+#     def forward(self, x):
+#         if self.inplace:
+#             x.mul_(torch.sigmoid(x))
+#             return x
+#         else:
+#             return x * torch.sigmoid(x)
+
+Mish = nn.Mish
+Swish = nn.SiLU
+
+
+def squareplus(x, b=0):
+    return torch.mul(0.5, torch.add(x, torch.sqrt(torch.add(torch.square(x), b))))
+
+
+class SquarePlus(nn.Module):
+    def __init__(self, b=1.52382103):
         super().__init__()
+        self.b = b
 
     def forward(self, x):
-        return x * (torch.tanh(F.softplus(x)))
-
-
-class Swish(nn.Module):
-    def __init__(self, inplace=False):
-        super().__init__()
-        self.inplace = inplace
-
-    def forward(self, x):
-        if self.inplace:
-            x.mul_(torch.sigmoid(x))
-            return x
-        else:
-            return x * torch.sigmoid(x)
+        return squareplus(x, self.b)
 
 
 class FReLU(nn.Module):
