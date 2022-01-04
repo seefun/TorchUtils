@@ -57,6 +57,7 @@ class SmoothBCEwLogits(_WeightedLoss):
 
 
 class SoftTargetCrossEntropy(nn.Module):
+    """ CrossEntropy Loss for soft label """
 
     def __init__(self):
         super(SoftTargetCrossEntropy, self).__init__()
@@ -87,8 +88,8 @@ class KLDivLosswLogits(nn.Module):
         self.loss = nn.KLDivLoss(reduction='batchmean')
 
     def forward(self, model_output, target):
-        log = torch.sigmoid(model_output)
-        loss = self.loss(log, target)
+        log = torch.sigmoid(model_output).softmax(-1).log()
+        loss = self.loss(log, target.softmax(-1))
         return loss
 
 
@@ -100,9 +101,9 @@ class JSDivLosswSoftmax(nn.Module):
         self.loss = nn.KLDivLoss(reduction='batchmean')
 
     def forward(self, model_output, target):
-        log = F.log_softmax(model_output, dim=-1)
-        m = (log + target) / 2.0
-        loss = 0.5 * (self.loss(log, m) + self.loss(target, m))
+        pred = F.softmax(model_output, dim=-1)
+        m = ((pred + target) / 2.0).log()
+        loss = 0.5 * (self.loss(m, pred) + self.loss(m, target))
         return loss
 
 
@@ -114,9 +115,10 @@ class JSDivLosswLogits(nn.Module):
         self.loss = nn.KLDivLoss(reduction='batchmean')
 
     def forward(self, model_output, target):
-        log = torch.sigmoid(model_output)
-        m = (log + target) / 2.0
-        loss = 0.5 * (self.loss(log, m) + self.loss(target, m))
+        pred = torch.sigmoid(model_output).softmax(-1)
+        target = target.softmax(-1)
+        m = ((pred + target) / 2.0).log()
+        loss = 0.5 * (self.loss(m, pred) + self.loss(m, target))
         return loss
 
 
