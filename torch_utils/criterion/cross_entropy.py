@@ -88,7 +88,7 @@ class KLDivLosswLogits(nn.Module):
         self.loss = nn.KLDivLoss(reduction='batchmean')
 
     def forward(self, model_output, target):
-        log = torch.sigmoid(model_output).softmax(-1).log()
+        log = model_output.softmax(-1).log()
         loss = self.loss(log, target.softmax(-1))
         return loss
 
@@ -101,9 +101,9 @@ class JSDivLosswSoftmax(nn.Module):
         self.loss = nn.KLDivLoss(reduction='batchmean')
 
     def forward(self, model_output, target):
-        pred = F.softmax(model_output, dim=-1)
-        m = ((pred + target) / 2.0).log()
-        loss = 0.5 * (self.loss(m, pred) + self.loss(m, target))
+        pred = model_output.softmax(-1)
+        m = (pred + target) / 2.0
+        loss = 0.5 * (self.loss(pred.log(), m) + self.loss(target.log(), m))
         return loss
 
 
@@ -115,10 +115,10 @@ class JSDivLosswLogits(nn.Module):
         self.loss = nn.KLDivLoss(reduction='batchmean')
 
     def forward(self, model_output, target):
-        pred = torch.sigmoid(model_output).softmax(-1)
+        pred = model_output.softmax(-1)
         target = target.softmax(-1)
-        m = ((pred + target) / 2.0).log()
-        loss = 0.5 * (self.loss(m, pred) + self.loss(m, target))
+        m = (pred + target) / 2.0
+        loss = 0.5 * (self.loss(pred.log(), m) + self.loss(target.log(), m))
         return loss
 
 
