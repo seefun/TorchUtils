@@ -178,3 +178,4 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 - [ ] Add model speed profile benchmark for traninig and testing (also with amp, fp16, channel last xxx)
 - [ ] Add model profile to replace 3rd part libs
 - [ ] remove @autocast in model and add a AMP model Decorate class with autocast
+- [ ] named_apply in timm to apply init weight
