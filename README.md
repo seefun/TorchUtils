@@ -156,7 +156,7 @@ lr_finder.reset() # to reset the model and optimizer to their initial state
 ```
 scheduler = tu.get_flat_anneal_scheduler(optimizer, max_iter, warmup_iter=0, decay_start=0.5, anneal='cos', gamma=0.05)
 
-# scheduler = tu.CosineAnnealingWarmUpRestarts(optimizer, T_0=T, T_mult=1, eta_max=LR, T_up=0, gamma=0.05)
+# scheduler = tu.CosineAnnealingWarmupRestarts(optimizer, T_0=T, T_mult=1, eta_max=LR, T_up=0, gamma=0.05)
 # torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult=1, eta_min=0, last_epoch=-1)
 # torch.optim.lr_scheduler.OneCycleLR or tu.OneCycleScheduler
 ```
