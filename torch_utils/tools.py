@@ -25,19 +25,20 @@ def seed_everything(seed=42, deterministic=True):
     Example:
         >>> seed_everything(42) 
     '''
-    random.seed(seed)
     os.environ['PYHTONHASHSEED'] = str(seed)
+    random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     if deterministic:
         torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
     else:
+        torch.backends.cudnn.deterministic = False
         torch.backends.cudnn.benchmark = True
 
 
-def worker_init_fn(worker_id):
+def worker_init_fn(worker_id, num_workers=None, rank=None):
     """
     used in dataloader to avoid numpy random bug in multi workers pytorch dataloader
     https://tanelp.github.io/posts/a-bug-that-plagues-thousands-of-open-source-ml-projects/
@@ -47,7 +48,12 @@ def worker_init_fn(worker_id):
         >>> # And also, in each epoch start, you should do:
         >>> np.random.seed(initial_seed + epoch*999)
     """
-    np.random.seed(np.random.get_state()[1][0] + worker_id)
+    worker_seed = np.random.get_state()[1][0] + worker_id
+    if num_workers and rank:
+        worker_seed += num_workers * rank
+        torch.manual_seed(worker_seed)
+    random.seed(worker_seed)
+    np.random.seed(worker_seed)
 
 
 def backup_folder(source='.', destination='../exp/exp1/src'):
