@@ -4,7 +4,11 @@
 TorchUtils is a pytorch lib with several useful tools and training tricks. (Work In Progress)
 
 ## Install
+```bash
+git clone https://github.com/seefun/TorchUtils.git
+cd TorchUtils
 ```
+```bash
 pip install -r requirements.txt
 pip install .
 ```
