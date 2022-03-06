@@ -293,3 +293,19 @@ class SoftCrossEntropyLoss(nn.Module):
             reduction=self.reduction,
             dim=self.dim,
         )
+
+class DoubleDropoutLoss(nn.Module):
+    """Loss function for double dropout"""
+
+    def __init__(self, criterion=nn.CrossEntropyLoss(), contrast_weight=0.5):
+        super(DoubleDropoutLoss, self).__init__()
+        self.criterion = criterion
+        self.contrast_weight = contrast_weight
+        self.jsd = JSDivLosswLogits()
+
+    def forward(self, model_output1, model_output2, target):
+        loss1 =  self.criterion(model_output1, target)
+        loss2 =  self.criterion(model_output2, target)
+        jsd = self.jsd(model_output1, model_output2)
+        loss = (loss1 + loss2) / 2.0 + self.contrast_weight * jsd
+        return loss

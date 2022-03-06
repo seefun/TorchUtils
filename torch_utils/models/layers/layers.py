@@ -268,6 +268,20 @@ class MultiSampleDropoutFC(nn.Module):
         return out
 
 
+class DoubleDropoutFC(nn.Module):
+    """R-Drop"""
+    def __init__(self, in_ch, out_ch, dropout=0.5):
+        super(DoubleDropoutFC, self).__init__()
+        self.dropout1 = nn.Dropout(dropout)
+        self.dropout2 = nn.Dropout(dropout)
+        self.fc = nn.Linear(in_ch, out_ch, bias=True)
+
+    def forward(self, x):
+        out1 = self.fc(self.dropout1(x))
+        out2 = self.fc(self.dropout2(x))
+        return out1, out2
+
+
 class GaussianDropout(nn.Module):
     def __init__(self, alpha=1.0):
         super(GaussianDropout, self).__init__()
