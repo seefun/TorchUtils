@@ -1,5 +1,5 @@
 pytorch>=1.10.0
-timm>=0.4.5
+timm>=0.5.4
 albumentations>=1.0.0
 pytorch-metric-learning>=1.2.0
 torchinfo>=0.1.1
