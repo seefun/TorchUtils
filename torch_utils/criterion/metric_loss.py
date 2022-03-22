@@ -1,6 +1,6 @@
 # from https://kevinmusgrave.github.io/pytorch-metric-learning/losses/
 
-from pytorch_metric_learning.losses import CircleLoss, ArcFaceLoss, SupConLoss
+from pytorch_metric_learning.losses import CircleLoss, ArcFaceLoss, SubCenterArcFaceLoss, SupConLoss
 from pytorch_metric_learning.losses import NTXentLoss, CrossBatchMemory
 
 # logist, embeddings = model_conv(input)
@@ -11,6 +11,7 @@ from pytorch_metric_learning.losses import NTXentLoss, CrossBatchMemory
 
 CircleLoss = CircleLoss
 ArcFaceLoss = ArcFaceLoss
+SubCenterArcFaceLoss = SubCenterArcFaceLoss
 SupConLoss = SupConLoss
 
 InfoNCE = NTXentLoss

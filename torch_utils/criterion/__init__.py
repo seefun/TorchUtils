@@ -1,15 +1,17 @@
+# cls losses
 from .cross_entropy import LabelSmoothingCrossEntropy, SmoothBCEwLogits
 from .cross_entropy import SoftTargetCrossEntropy
 from .cross_entropy import KLDivLosswSoftmax, KLDivLosswLogits, JSDivLosswSoftmax, JSDivLosswLogits
 from .cross_entropy import topkLoss
 from .cross_entropy import DoubleDropoutLoss
 
-from .metric_loss import CircleLoss, ArcFaceLoss, SupConLoss
+from .wasserstein import SinkhornDistance
+
+# metric learning losses
+from .metric_loss import CircleLoss, ArcFaceLoss, SubCenterArcFaceLoss, SupConLoss
 from .metric_loss import InfoNCE
 from .metric_loss import CrossBatchMemory
 from .metric_loss import MoCo, SupConLoss_MoCo
-
-from .wasserstein import SinkhornDistance
 
 # seg losses
 from .cross_entropy import SoftBCEWithLogitsLoss, SoftCrossEntropyLoss
