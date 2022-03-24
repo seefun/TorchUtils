@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from torch.cuda.amp import autocast
 
 from torch_utils.models.layers import FastGlobalConcatPool2d, FastGlobalAvgPool2d, GeM_cw, MultiSampleDropoutFC, SEBlock
 from torch_utils.models import create_timm_model
@@ -52,7 +51,6 @@ class ImageModel(nn.Module):
         else:
             self.fc = nn.Linear(in_features=num_feature, out_features=classes, bias=True)
 
-    @autocast()
     def forward(self, x):
         feature_map = self.model(x)[-1]
         embedding = self.pooling(feature_map)
