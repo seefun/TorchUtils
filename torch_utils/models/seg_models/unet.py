@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.cuda.amp import autocast
 
 from torch_utils.models.layers import conv1x1, conv3x3, SCSE, CBAM, CoordAttention, \
     ASPP, FastGlobalConcatPool2d, get_simple_fc
@@ -352,7 +351,6 @@ class UNet(nn.Module):
                 get_simple_fc(2 * encoder_channels[-1], out_channel)
             )
 
-    @ autocast()
     def forward(self, inputs):
         # shape
         h, w = inputs.shape[2], inputs.shape[3]

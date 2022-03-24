@@ -19,10 +19,11 @@ def conv1x1(in_channel, out_channel):  # not change resolution
 def init_weight(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+        #nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+        nn.init.normal_(m.weight, std=0.02)
         if m.bias is not None:
             m.bias.data.zero_()
-    elif classname.find('Batch') != -1:
+    elif classname.find('Norm') != -1:
         m.weight.data.normal_(1, 0.02)
         m.bias.data.zero_()
     elif classname.find('Linear') != -1:
@@ -31,6 +32,20 @@ def init_weight(m):
             m.bias.data.zero_()
     elif classname.find('Embedding') != -1:
         nn.init.orthogonal_(m.weight, gain=1)
+
+
+def named_apply(fn, module, depth_first=True, include_root=False) -> nn.Module:
+    """ in Module __init__: 
+        named_apply(init_weight, self) 
+    """
+    if not depth_first and include_root:
+        fn(module=module)
+    for child_name, child_module in module.named_children():
+        named_apply(fn=fn, module=child_module,
+                    depth_first=depth_first, include_root=True)
+    if depth_first and include_root:
+        fn(module=module)
+    return module
 
 # Attention
 
@@ -270,6 +285,7 @@ class MultiSampleDropoutFC(nn.Module):
 
 class DoubleDropoutFC(nn.Module):
     """R-Drop"""
+
     def __init__(self, in_ch, out_ch, dropout=0.5):
         super(DoubleDropoutFC, self).__init__()
         self.dropout1 = nn.Dropout(dropout)

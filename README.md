@@ -170,12 +170,10 @@ Ref: https://pytorch.org/docs/master/notes/amp_examples.html
 ## TODO
 - [ ] add unit test for models
 - [x] add Hybrid Vision Transformer
-- [ ] channels_last
-- [ ] inplace_abn
 - [ ] grad-CAM
 - [ ] convert [paddle ssld model](https://github.com/PaddlePaddle/PaddleClas/blob/release/2.3/docs/zh_CN/algorithm_introduction/ImageNet_models.md#ssld%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B) to pytorch
-- [ ] decouple encoder neck and decoder in seg model, using resize_concat some feature and upsampling to raw resolution
+- [x] decouple encoder neck and decoder in seg model, using resize_concat some feature and upsampling to raw resolution
+- [ ] FCNHead
+- [ ] UNetNeck
 - [ ] Add model speed profile benchmark for traninig and testing (also with amp, fp16, channel last xxx)
-- [ ] Add model profile to replace 3rd part libs
-- [ ] remove @autocast in model and add a AMP model Decorate class with autocast
-- [ ] named_apply in timm to apply init weight
+- [x] named_apply in timm to apply init weight
