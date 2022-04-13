@@ -46,7 +46,7 @@ class Anti_Alias_Filter(nn.Module):
 
 
 class AntiAliasDownsampleLayer(nn.Module):
-    """ Fixed Blur filter with stride 2
+    """ Fixed Blur filter with stride 2 (BlurPool)
         From: Making convolutional networks shift-invariant again. In ICML, 2019. | From: T-ResNet.
     """
 
@@ -103,3 +103,6 @@ class Downsample(nn.Module):
     def forward(self, input):
         input_pad = F.pad(input, (1, 1, 1, 1), 'reflect')
         return F.conv2d(input_pad, self.filt, stride=self.stride, padding=0, groups=input.shape[1])
+
+BlurPool = AntiAliasDownsampleLayer
+AAFilter = Anti_Alias_Filter
