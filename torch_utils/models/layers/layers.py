@@ -19,7 +19,7 @@ def conv1x1(in_channel, out_channel):  # not change resolution
 def init_weight(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        #nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+        # nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
         nn.init.normal_(m.weight, std=0.02)
         if m.bias is not None:
             m.bias.data.zero_()
