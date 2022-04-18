@@ -114,3 +114,13 @@ class TestMultiLoss:
         loss_fn = criterion.TverskyLoss('multiclass')
         loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
         print(loss)
+
+
+class TestRegressionLoss:
+    y_pred = torch.tensor([0.88, -0.10, 0.55]).view(-1, 1)
+    y_true = torch.tensor(([1.0, 0.4, 1.1])).view(-1, 1)
+
+    def test_bmc_loss(self):
+        loss_fn = criterion.BMCLoss()
+        loss = loss_fn(TestRegressionLoss.y_pred, TestRegressionLoss.y_true)
+        print(loss)

@@ -20,3 +20,6 @@ from .focal import BinaryFocalLoss, FocalLoss
 from .bitempered_loss import BiTemperedLogisticLoss, BinaryBiTemperedLogisticLoss
 from .dice import DiceLoss, TverskyLoss
 from .rmi import RMILoss
+
+# reg losses
+from .balanced_mse import BMCLoss
