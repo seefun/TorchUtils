@@ -1,3 +1,4 @@
+# adapted from https://github.com/jiawei-ren/BalancedMSE
 import torch
 import torch.nn.functional as F
 from torch.nn.modules.loss import _Loss
