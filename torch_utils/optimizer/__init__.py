@@ -7,5 +7,5 @@ from timm.optim import Lamb, Lars, AdamP, SGDP
 from timm.optim import RMSpropTF as RMSprop
 from .lookahead import Lookahead
 
-from .group_optim import get_params
+from .optim_factor import param_groups_weight_decay
 from .lr_finder import LRFinder
