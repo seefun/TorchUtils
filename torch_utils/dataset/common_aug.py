@@ -4,6 +4,23 @@ from albumentations import pytorch as AT
 
 IMAGE_SIZE = 512
 
+three_augment = albumentations.Compose([
+    albumentations.Resize(IMAGE_SIZE, IMAGE_SIZE),
+    albumentations.HorizontalFlip(p=0.5),
+    albumentations.ColorJitter(p=0.99),
+    # 3-Augment
+    albumentations.OneOf([
+        albumentations.GaussianBlur(p=1.0),
+        albumentations.ToGray(p=1.0),
+        albumentations.Solarize(p=1.0),
+    ], p=0.75),
+    # other augmentations
+    albumentations.Affine(translate_percent=(-0.0625, 0.0625), p=0.9),
+    albumentations.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.0625, rotate_limit=15, border_mode=1, p=0.9),
+    albumentations.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+    AT.ToTensorV2(),
+])
+
 train_transform_randaug = albumentations.Compose([
     albumentations.Resize(IMAGE_SIZE, IMAGE_SIZE),
     albumentations.RandomRotate90(p=0.5),  # albumentations.SafeRotate(border_mode=1, p=0.5),
