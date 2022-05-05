@@ -4,7 +4,7 @@ from .cross_entropy import SoftTargetCrossEntropy
 from .cross_entropy import KLDivLosswSoftmax, KLDivLosswLogits, JSDivLosswSoftmax, JSDivLosswLogits
 from .cross_entropy import topkLoss
 from .cross_entropy import DoubleDropoutLoss
-
+from .poly_loss import PolyLoss
 from .wasserstein import SinkhornDistance
 
 # metric learning losses

@@ -115,6 +115,19 @@ class TestMultiLoss:
         loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
         print(loss)
 
+    def test_polyloss(self):
+        loss_fn = criterion.PolyLoss()
+        loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
+        print(loss)
+        # Compare with CE
+        loss_fn = criterion.PolyLoss(0)
+        loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
+        print(loss)
+        ce = torch.nn.CrossEntropyLoss()
+        ce_loss = ce(TestMultiLoss.y_pred, TestMultiLoss.y_true)
+        print(ce_loss)
+        assert abs(loss - ce_loss) < 0.000001
+
 
 class TestRegressionLoss:
     y_pred = torch.tensor([0.88, -0.10, 0.55]).view(-1, 1)
