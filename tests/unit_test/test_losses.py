@@ -134,7 +134,7 @@ class TestMultiLoss:
         assert abs(loss - ce_loss) < 0.000001
 
     def test_seesawloss(self):
-        loss_fn = criterion.SeesawLoss()
+        loss_fn = criterion.SeesawLoss(len(TestMultiLoss.y_true.unique()))
         loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
         print(loss)
 
