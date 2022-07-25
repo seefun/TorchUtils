@@ -6,6 +6,7 @@ from .cross_entropy import topkLoss
 from .cross_entropy import DoubleDropoutLoss
 from .poly_loss import PolyLoss
 from .wasserstein import SinkhornDistance
+from .seesaw_loss import SeesawLoss
 
 # metric learning losses
 from .metric_loss import CircleLoss, ArcFaceLoss, SubCenterArcFaceLoss, SupConLoss

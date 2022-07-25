@@ -128,6 +128,11 @@ class TestMultiLoss:
         print(ce_loss)
         assert abs(loss - ce_loss) < 0.000001
 
+    def test_seesawloss(self):
+        loss_fn = criterion.SeesawLoss()
+        loss = loss_fn(TestMultiLoss.y_pred, TestMultiLoss.y_true)
+        print(loss)
+
 
 class TestRegressionLoss:
     y_pred = torch.tensor([0.88, -0.10, 0.55]).view(-1, 1)
