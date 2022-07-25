@@ -77,6 +77,11 @@ class TestBinaryLoss:
                              TestBinaryLoss.y_true.view(-1, 1))
         print(loss)
 
+    def test_polybceloss(self):
+        loss_fn = criterion.PolyBCELoss()
+        loss = loss_fn(TestBinaryLoss.y_pred, TestBinaryLoss.y_true)
+        print(loss)
+
 
 class TestMultiLoss:
     y_pred = torch.tensor([[+1, -1, -1, -1],
