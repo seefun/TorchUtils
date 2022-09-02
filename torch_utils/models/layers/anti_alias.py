@@ -98,7 +98,7 @@ class Downsample(nn.Module):
         filt = filt / torch.sum(filt)
 
         # self.filt = filt[None, None, :, :].repeat((self.channels, 1, 1, 1))
-        self.register_buffer('filt', filt[None, None, :, :].repeat((self.channels, 1, 1, 1)))
+        self.register_buffer('filt', filt[None, None, :, :].repeat(self.channels, 1, 1, 1))
 
     def forward(self, input):
         input_pad = F.pad(input, (1, 1, 1, 1), 'reflect')
