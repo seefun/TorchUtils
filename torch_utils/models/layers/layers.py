@@ -350,7 +350,8 @@ Mish = nn.Mish
 Swish = nn.SiLU
 
 
-def squareplus(x, b=0):
+@torch.jit.script
+def squareplus(x: torch.Tensor, b: float = 0.0):
     return torch.mul(0.5, torch.add(x, torch.sqrt(torch.add(torch.square(x), b))))
 
 
@@ -419,6 +420,9 @@ def get_attention_fc(in_ch, num_classes, flatten=False):
 # Official: torch.nn.PixelShuffle(upscale_factor)
 # SpaceToDepth == inverted pixel shuffle
 # Official: torch.nn.PixelUnshuffle(downscale_factor)
+PixelShuffle = nn.PixelShuffle
+PixelUnshuffle = nn.PixelUnshuffle
+
 
 def pixelshuffle(x, factor_hw):
     pH = factor_hw[0]
@@ -551,4 +555,27 @@ class ASPP(nn.Module):
 
         x = self.conv1(x)
 
+        return x
+
+
+@torch.jit.script
+def _layer_norm_cf(x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor, eps: float):
+    s, u = torch.var_mean(x, dim=1, unbiased=False, keepdim=True)
+    x = (x - u) * torch.rsqrt(s + eps)
+    x = x * weight[:, None, None] + bias[:, None, None]
+    return x
+
+
+class LayerNorm2d(nn.LayerNorm):
+    """
+    seefun: replace the layernorm to speed up and reduce GPU mem cost (in timm ConvNeXt model)
+    convnext_nano + deeplabrahead 1024x1024 speed:
+    timm 50.1ms | timm with fastnorm 51.0ms | our jit fastnorm 24.1ms
+    """
+
+    def __init__(self, num_channels, eps=1e-6):
+        super().__init__(num_channels, eps=eps)
+
+    def forward(self, x) -> torch.Tensor:
+        x = _layer_norm_cf(x, self.weight, self.bias, self.eps)
         return x
